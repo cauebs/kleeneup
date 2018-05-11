@@ -10,9 +10,12 @@ class FiniteAutomaton:
         self.graph = self.make_graph(transitions)
 
         self.states = set(self.graph.nodes())
-        self.transitions = transitions
+        self.transitions = dict(transitions)
         self.initial_state = initial_state
         self.final_states = set(final_states)
+        self.alphabet = ''
+        for k, v in transitions.items():
+            self.alphabet += k[1]
 
     @classmethod
     def from_regular_grammar(cls, rg):
@@ -54,10 +57,40 @@ class FiniteAutomaton:
         ...
 
     def union(self, other):
-        ...
+        # Makes a new state
+        initial_state = 'Q0'
+
+        # Union of transition functions
+        transitions = self.transitions
+        transitions.update(other.transitions)
+
+        # Copy old initial states transitions to new initial state
+        for symbol in self.alphabet:
+            transitions[
+                (initial_state, symbol)
+            ] = self.transitions[(self.initial_state, symbol)]
+            transitions[
+                (initial_state, symbol)
+            ] = other.transitions[(other.initial_state, symbol)]
+
+        # Union of final states
+        final_states = set.union(self.final_states, other.final_states)
+
+        return FiniteAutomaton(transitions, initial_state, final_states)
 
     def concatenate(self, other):
-        ...
+        # Union of transition functions
+        transitions = self.transitions
+        transitions.update(other.transitions)
+
+        for state in self.final_states:
+            transitions[(state, '&')] = other.initial_state
+
+        return FiniteAutomaton(
+            transitions,
+            self.initial_state,
+            other.final_states
+        )
 
     def number_of_states(self):
         return self.graph.number_of_nodes()
