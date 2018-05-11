@@ -99,3 +99,17 @@ def test_complete():
     }
 
     assert complete_transitions == complete_fa.transitions
+
+
+def test_negate():
+    transitions = {
+        ('A', 'a'): 'A',
+        ('A', 'b'): 'B'
+    }
+
+    fa = FiniteAutomaton(transitions, 'A', 'B')
+    fa = fa.complete()
+
+    fa = fa.negate()
+
+    assert fa.final_states == set(['A', 'Qerror'])

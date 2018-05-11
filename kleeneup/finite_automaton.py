@@ -65,7 +65,14 @@ class FiniteAutomaton:
         ...
 
     def negate(self):
-        ...
+        fa = self.complete()
+
+        finals = set()
+        for state in fa.states:
+            if (state not in fa.final_states):
+                finals.add(state)
+
+        return FiniteAutomaton(fa.transitions, fa.initial_state, finals)
 
     def intersection(self, other):
         ...
