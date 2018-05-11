@@ -7,7 +7,7 @@ trasitions = {(state, symbol): next_state}
 
 class FiniteAutomaton:
     def __init__(self, transitions, initial_state, final_states):
-        self.graph = self.make_graph()
+        self.graph = self.make_graph(transitions)
 
         self.states = set(self.graph.nodes())
         self.transitions = transitions
@@ -65,11 +65,11 @@ class FiniteAutomaton:
     def number_of_transitions(self):
         return self.graph.number_of_edges()
 
-    def make_graph(self):
+    def make_graph(self, transitions):
         graph = nx.MultiDiGraph()
         for k, next_state in transitions.items():
             current_state, symbol = k
 
-            self.graph.add_edge(current_state, next_state, symbol=symbol)
+            graph.add_edge(current_state, next_state, symbol=symbol)
 
         return graph
