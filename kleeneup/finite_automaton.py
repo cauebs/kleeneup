@@ -38,13 +38,25 @@ class FiniteAutomaton:
     def complete(self):
         ...
 
+    def reverse(self):
+        ...
+
+    def kleene_star(self):
+        ...
+
+    def negate(self):
+        ...
+
     def intersection(self, other):
         ...
 
     def difference(self, other):
         ...
 
-    def reverse(self):
+    def union(self, other):
+        ...
+
+    def concatenate(self, other):
         ...
 
     def number_of_states(self):
