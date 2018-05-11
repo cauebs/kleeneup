@@ -19,6 +19,7 @@ def test_init():
     assert fa.states == set(['A', 'B', 'C'])
     assert fa.initial_state == 'A'
     assert fa.final_states == set(['C'])
+    assert fa.alphabet == set(['a', 'b'])
 
 
 def test_union():
@@ -76,3 +77,25 @@ def test_concatenate():
     assert fa_union.transitions == transitions_union
     assert fa_union.initial_state == 'A'
     assert fa_union.final_states == set('D')
+
+
+def test_complete():
+    transitions = {
+        ('A', 'a'): 'A',
+        ('A', 'b'): 'B'
+    }
+
+    fa = FiniteAutomaton(transitions, 'A', 'B')
+
+    complete_fa = fa.complete()
+
+    complete_transitions = {
+        ('A', 'a'): 'A',
+        ('A', 'b'): 'B',
+        ('B', 'a'): 'Qerror',
+        ('B', 'b'): 'Qerror',
+        ('Qerror', 'a'): 'Qerror',
+        ('Qerror', 'b'): 'Qerror',
+    }
+
+    assert complete_transitions == complete_fa.transitions

@@ -13,9 +13,9 @@ class FiniteAutomaton:
         self.transitions = dict(transitions)
         self.initial_state = initial_state
         self.final_states = set(final_states)
-        self.alphabet = ''
+        self.alphabet = set()
         for k, v in transitions.items():
-            self.alphabet += k[1]
+            self.alphabet.add(k[1])
 
     @classmethod
     def from_regular_grammar(cls, rg):
@@ -39,7 +39,24 @@ class FiniteAutomaton:
 
     # completes undefined transitions
     def complete(self):
-        ...
+        error_state = 'Qerror'
+
+        transitions = self.transitions
+        states = self.states
+        states.add(error_state)
+
+        for state in states:
+            for symbol in self.alphabet:
+                try:
+                    self.transitions[state, symbol]
+                except KeyError:
+                    transitions[state, symbol] = error_state
+
+        return FiniteAutomaton(
+            transitions,
+            self.initial_state,
+            self.final_states
+        )
 
     def reverse(self):
         ...
