@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>717</width>
+    <height>526</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Kleeneup</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QWidget" name="widget" native="true">
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="1">
+        <widget class="QComboBox" name="comboBox_2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QTableView" name="tableView"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QComboBox" name="comboBox"/>
+       </item>
+       <item row="0" column="2">
+        <widget class="QComboBox" name="comboBox_3">
+         <item>
+          <property name="text">
+           <string>União</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Diferença</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Interseção</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Reverso</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Fecho Transitivo</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Minimização</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Determinização</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Concatenação</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Complemento</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Completar</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QPushButton" name="pushButton">
+         <property name="text">
+          <string>Aplicar</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2" colspan="2">
+        <widget class="QTableView" name="tableView_3"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="QTableView" name="tableView_2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>717</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuExportar">
+    <property name="title">
+     <string>Exportar</string>
+    </property>
+    <addaction name="actionGram_tica_2"/>
+   </widget>
+   <widget class="QMenu" name="menuInserir">
+    <property name="title">
+     <string>Importar</string>
+    </property>
+   </widget>
+   <addaction name="menuInserir"/>
+   <addaction name="menuExportar"/>
+  </widget>
+  <action name="actionGram_tica">
+   <property name="text">
+    <string>Gramática</string>
+   </property>
+  </action>
+  <action name="actionExp_Regular">
+   <property name="text">
+    <string>Exp. Regular</string>
+   </property>
+  </action>
+  <action name="actionGram_tica_2">
+   <property name="text">
+    <string>Gramática</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
