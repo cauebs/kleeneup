@@ -1,115 +1,122 @@
 import pytest
-from kleeneup import FiniteAutomaton
+from kleeneup import *
 
 xfail = pytest.xfail
 
 
-def test_init():
-    transitions = {
-        ('A', 'a'): 'A',
-        ('A', 'b'): 'B',
-        ('B', 'b'): 'B',
-        ('B', 'a'): 'C',
-        ('C', 'a'): 'A'
-    }
-    fa = FiniteAutomaton(transitions, 'A', 'C')
+def test_copy():
+    a = Symbol('a')
+    b = Symbol('b')
 
-    assert fa.number_of_states() == 3
-    assert fa.number_of_transitions() == 5
-    assert fa.states == set(['A', 'B', 'C'])
-    assert fa.initial_state == 'A'
-    assert fa.final_states == set(['C'])
-    assert fa.alphabet == set(['a', 'b'])
+    A = State('A')
+    B = State('B')
+    A[a] = B
+    A[b] = A
+    B[a] = A
+    B[b] = B
+
+    fa1 = FiniteAutomaton([A, B], A, [A])
+    fa2 = fa1.copy()
+
+    assert fa1 is not fa2
+
+
+def test_evaluate():
+    a = Symbol('a')
+
+    A = State('A')
+    B = State('B')
+    A[a] = B
+    B[a] = A
+
+    fa = FiniteAutomaton([A, B], A, [A])
+
+    assert not fa.evaluate(Sentence('aaa'))
+    assert fa.evaluate(Sentence(''))
+    assert fa.evaluate(Sentence('aa'))
 
 
 def test_union():
-    transitions_1 = {
-        ('A', 'a'): 'A',
-        ('A', 'b'): 'B'
-    }
+    a = Symbol('a')
+    b = Symbol('b')
 
-    transitions_2 = {
-        ('C', 'b'): 'C',
-        ('C', 'a'): 'D'
-    }
+    A = State('A')
+    B = State('B')
+    A[a] = B
+    fa_1 = FiniteAutomaton([A, B], A, [B])
 
-    fa_1 = FiniteAutomaton(transitions_1, 'A', 'B')
-    fa_2 = FiniteAutomaton(transitions_2, 'C', 'D')
+    C = State('C')
+    D = State('D')
+    C[b] = D
+    fa_2 = FiniteAutomaton([C, D], C, [D])
 
     fa_union = FiniteAutomaton.union(fa_1, fa_2)
 
-    transitions_union = {
-        ('A', 'a'): 'A',
-        ('A', 'b'): 'B',
-        ('C', 'b'): 'C',
-        ('C', 'a'): 'D',
-        ('Q0', 'a'): 'A',
-        ('Q0', 'a'): 'D',
-        ('Q0', 'b'): 'B',
-        ('Q0', 'b'): 'C',
-    }
+    assert not fa_1.evaluate(Sentence('b'))
+    assert not fa_2.evaluate(Sentence('a'))
 
-    assert fa_union.transitions == transitions_union
-    assert fa_union.initial_state == 'Q0'
-    assert fa_union.final_states == set(['B', 'D'])
+    assert fa_union.evaluate(Sentence('a'))
+    assert fa_union.evaluate(Sentence('b'))
+    assert not fa_union.evaluate(Sentence(''))
+    assert not fa_union.evaluate(Sentence('ab'))
+    assert not fa_union.evaluate(Sentence('ba'))
 
 
 def test_concatenate():
-    transitions_1 = {
-        ('A', 'a'): 'B'
-    }
+    a = Symbol('a')
 
-    transitions_2 = {
-        ('C', 'a'): 'D'
-    }
+    A = State('A')
+    B = State('B')
+    A[a] = B
 
-    fa_1 = FiniteAutomaton(transitions_1, 'A', 'B')
-    fa_2 = FiniteAutomaton(transitions_2, 'C', 'D')
+    C = State('C')
+    D = State('D')
+    C[a] = D
 
-    fa_union = FiniteAutomaton.concatenate(fa_1, fa_2)
+    fa_1 = FiniteAutomaton([A, B], A, [B])
+    fa_2 = FiniteAutomaton([C, D], C, [D])
 
-    transitions_union = {
-        ('A', 'a'): 'B',
-        ('C', 'a'): 'D',
-        ('B', '&'): 'C'
-    }
+    fa_concat = FiniteAutomaton.concatenate(fa_1, fa_2)
 
-    assert fa_union.transitions == transitions_union
-    assert fa_union.initial_state == 'A'
-    assert fa_union.final_states == set('D')
+    assert not fa_concat.evaluate(Sentence(''))
+    assert not fa_concat.evaluate(Sentence('a'))
+    assert fa_concat.evaluate(Sentence('aa'))
+    assert not fa_concat.evaluate(Sentence('aaa'))
 
 
 def test_complete():
-    transitions = {
-        ('A', 'a'): 'A',
-        ('A', 'b'): 'B'
-    }
+    a = Symbol('a')
+    b = Symbol('b')
 
-    fa = FiniteAutomaton(transitions, 'A', 'B')
+    A = State('A')
+    B = State('B')
+    A[a] = A
+    A[b] = B
+
+    fa = FiniteAutomaton([A, B], A, [B])
 
     complete_fa = fa.complete()
 
-    complete_transitions = {
-        ('A', 'a'): 'A',
-        ('A', 'b'): 'B',
-        ('B', 'a'): 'Qerror',
-        ('B', 'b'): 'Qerror',
-        ('Qerror', 'a'): 'Qerror',
-        ('Qerror', 'b'): 'Qerror',
-    }
-
-    assert complete_transitions == complete_fa.transitions
+    xfail("Not Implemented")
 
 
 def test_negate():
-    transitions = {
-        ('A', 'a'): 'A',
-        ('A', 'b'): 'B'
-    }
+    a = Symbol('a')
+    b = Symbol('b')
 
-    fa = FiniteAutomaton(transitions, 'A', 'B')
-    fa = fa.complete()
+    A = State('A')
+    B = State('B')
+    A[a] = A
+    A[b] = B
 
-    fa = fa.negate()
+    fa = FiniteAutomaton([A, B], A, [B])
 
-    assert fa.final_states == set(['A', 'Qerror'])
+    assert not fa.evaluate(Sentence(''))
+    assert not fa.evaluate(Sentence('aaa'))
+    assert fa.evaluate(Sentence('ab'))
+
+    fa_n = fa.negate()
+
+    assert fa.evaluate(Sentence(''))
+    assert fa.evaluate(Sentence('aaa'))
+    assert not fa.evaluate(Sentence('ab'))
