@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>717</width>
-    <height>526</height>
+    <width>726</width>
+    <height>470</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,9 +24,6 @@
           <bool>true</bool>
          </property>
         </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QTableView" name="tableView"/>
        </item>
        <item row="0" column="0">
         <widget class="QComboBox" name="comboBox"/>
@@ -92,8 +89,8 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="2" colspan="2">
-        <widget class="QTableView" name="tableView_3"/>
+       <item row="1" column="0">
+        <widget class="QTableView" name="tableView"/>
        </item>
        <item row="1" column="1">
         <widget class="QTableView" name="tableView_2">
@@ -101,6 +98,9 @@
           <bool>true</bool>
          </property>
         </widget>
+       </item>
+       <item row="1" column="2" colspan="2">
+        <widget class="QTableView" name="tableView_3"/>
        </item>
       </layout>
      </widget>
@@ -113,7 +113,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>717</width>
+     <width>726</width>
      <height>21</height>
     </rect>
    </property>
@@ -121,29 +121,25 @@
     <property name="title">
      <string>Exportar</string>
     </property>
-    <addaction name="actionGram_tica_2"/>
+    <addaction name="action_aut2gram"/>
    </widget>
-   <widget class="QMenu" name="menuInserir">
+   <widget class="QMenu" name="menuImportar">
     <property name="title">
      <string>Importar</string>
     </property>
+    <addaction name="action_open_input"/>
    </widget>
-   <addaction name="menuInserir"/>
+   <addaction name="menuImportar"/>
    <addaction name="menuExportar"/>
   </widget>
-  <action name="actionGram_tica">
+  <action name="action_aut2gram">
    <property name="text">
-    <string>Gramática</string>
+    <string>Autômato para Gramática</string>
    </property>
   </action>
-  <action name="actionExp_Regular">
+  <action name="action_open_input">
    <property name="text">
-    <string>Exp. Regular</string>
-   </property>
-  </action>
-  <action name="actionGram_tica_2">
-   <property name="text">
-    <string>Gramática</string>
+    <string>Expressão/Gramática</string>
    </property>
   </action>
  </widget>

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>inputDialog</class>
- <widget class="QDialog" name="inputDialog">
+ <class>entradaExpGram</class>
+ <widget class="QDialog" name="entradaExpGram">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>299</height>
+    <height>295</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,7 +60,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>inputDialog</receiver>
+   <receiver>entradaExpGram</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -76,12 +76,12 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>inputDialog</receiver>
+   <receiver>entradaExpGram</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>295</x>
-     <y>287</y>
+     <x>304</x>
+     <y>285</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
