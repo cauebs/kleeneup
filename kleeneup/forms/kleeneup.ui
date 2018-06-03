@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>726</width>
-    <height>470</height>
+    <width>653</width>
+    <height>524</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,17 +19,17 @@
      <widget class="QWidget" name="widget" native="true">
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="1">
-        <widget class="QComboBox" name="comboBox_2">
+        <widget class="QComboBox" name="fa_select_center">
          <property name="enabled">
           <bool>true</bool>
          </property>
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QComboBox" name="comboBox"/>
+        <widget class="QComboBox" name="fa_select_left"/>
        </item>
        <item row="0" column="2">
-        <widget class="QComboBox" name="comboBox_3">
+        <widget class="QComboBox" name="op_select">
          <item>
           <property name="text">
            <string>União</string>
@@ -83,24 +83,32 @@
         </widget>
        </item>
        <item row="0" column="3">
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="apply_op_btn">
          <property name="text">
           <string>Aplicar</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QTableView" name="tableView"/>
+        <widget class="QTableWidget" name="table_left">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+        </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QTableView" name="tableView_2">
-         <property name="enabled">
-          <bool>true</bool>
+        <widget class="QTableWidget" name="table_mid">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
          </property>
         </widget>
        </item>
        <item row="1" column="2" colspan="2">
-        <widget class="QTableView" name="tableView_3"/>
+        <widget class="QTableWidget" name="table_right">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -113,7 +121,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>726</width>
+     <width>653</width>
      <height>21</height>
     </rect>
    </property>
