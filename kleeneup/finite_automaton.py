@@ -1,5 +1,5 @@
 from copy import deepcopy
-from string import ascii_lowercase, digits
+from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Union, NewType, Iterable, Iterator, Mapping
 from typing import Tuple, Set, Dict
 
@@ -86,10 +86,11 @@ class FiniteAutomaton:
     def copy(self) -> 'FiniteAutomaton':
         return deepcopy(self)
 
-    def _rename_states(self, table: Mapping[State, State]):
-        self.initial_state = table[self.initial_state]
-        self.states = {table[state] for state in self.states}
-        self.accept_states = {table[state] for state in self.accept_states}
+    def rename_states(self, table: Mapping[State, State]):
+        self.initial_state = table.get(self.initial_state, self.initial_state)
+        self.states = {table.get(state, state) for state in self.states}
+        self.accept_states = {table.get(state, state)
+                              for state in self.accept_states}
 
         old_transitions = self.transitions
         self._delta = {}
@@ -97,13 +98,13 @@ class FiniteAutomaton:
         for (state, symbol), next_states in old_transitions.items():
             for next_state in next_states:
                 self.add_transition(
-                    table[state],
+                    table.get(state, state),
                     symbol,
-                    table[next_state],
+                    table.get(next_state, next_state),
                 )
 
     def prefix_state_names(self, prefix):
-        self._rename_states({
+        self.rename_states({
             state: f'{prefix}{state}'
             for state in self.states
         })
@@ -115,14 +116,33 @@ class FiniteAutomaton:
             if state != self.initial_state
         }
         trans[self.initial_state] = 'Q0'
-        self._rename_states(trans)
+        self.rename_states(trans)
 
-#     @classmethod
-#     def from_regular_grammar(cls, grammar):
-#         ...
+    def to_regular_grammar(self):
+        from .regular_grammar import RegularGrammar
 
-#     def to_regular_grammar(self):
-#         ...
+        fa = self.copy()
+
+        non_terminals = ascii_uppercase.replace('S', '')
+        n = len(non_terminals)
+
+        table = {
+            state: non_terminals[i % n] + "'" * (i // n)
+            for i, state in enumerate(fa.states - {fa.initial_state})
+        }
+
+        table[fa.initial_state] = 'S'
+        fa.rename_states(table)
+
+        production_rules = []
+        for (state, symbol), next_states in fa.transitions.items():
+            for next_state in next_states:
+                production_rules.append((state, symbol, next_state))
+
+                if next_state in fa.accept_states:
+                    production_rules.append((state, symbol, ''))
+
+        return RegularGrammar(production_rules, start_symbol='S')
 
 #     @classmethod
 #     def from_regular_expression(cls, expr):
@@ -160,8 +180,8 @@ class FiniteAutomaton:
                 if (state, symbol) not in current_transitions:
                     self.add_transition(state, symbol, error_state)
 
-    # def reverse(self):
-    #     ...
+    def reverse(self):
+        ...
 
 #     def kleene_star(self):
 #         ...
