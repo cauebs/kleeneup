@@ -1,6 +1,7 @@
-from collections import defaultdict
+from copy import deepcopy
 from string import ascii_lowercase, digits
-from typing import DefaultDict, Iterable, Set, Iterator, Union, Dict
+from typing import Union, NewType, Iterable, Iterator, Mapping
+from typing import Tuple, Set, Dict
 
 
 class Symbol:
@@ -45,119 +46,76 @@ class Sentence:
         return iter(self.symbols)
 
 
-class State:
-    def __init__(self, name: str) -> None:
-        self.name = name
-        self.transitions: DefaultDict[Symbol, Set['State']] = defaultdict(set)
-
-    def __str__(self) -> str:
-        return self.name
-
-    def __repr__(self) -> str:
-        return f"<State '{self}'>"
-
-    def __getitem__(self, s: Union[Symbol, Sentence]) -> 'StateOverlap':
-        if isinstance(s, Symbol):
-            return StateOverlap(self.transitions[s])
-
-        states = StateOverlap({self})
-        for c in s:
-            states = states[c]
-
-        return states
-
-    def __setitem__(self, symbol: Symbol, next_state: 'State') -> None:
-        self.transitions[symbol].add(next_state)
-
-    def symbols(self) -> Set[Symbol]:
-        return set(self.transitions.keys())
-
-
-class StateOverlap:
-    def __init__(self, states: Iterable[State]) -> None:
-        self._states = set(states)
-
-    def __repr__(self) -> str:
-        return f"<StateOverlap {self._states}>"
-
-    @property
-    def states(self) -> Set[State]:
-        return self._states
-
-    def __getitem__(self, s: Union[Symbol, Sentence]) -> 'StateOverlap':
-        if isinstance(s, Symbol):
-            return StateOverlap(
-                state
-                for current in self._states
-                for state in current[s].states
-            )
-
-        states = self
-        for c in s:
-            states = states[c]
-
-        return states
-
-    def __iter__(self) -> Iterator[State]:
-        return iter(self._states)
-
-    def __bool__(self) -> bool:
-        return bool(self._states)
-
-    def __contains__(self, state: State) -> bool:
-        return state in self._states
+State = NewType('State', str)
 
 
 class FiniteAutomaton:
     def __init__(
         self,
-        states: Iterable[State],
+        transitions: Mapping[Tuple[State, Symbol], Set[State]],
         initial_state: State,
         accept_states: Iterable[State],
     ) -> None:
 
-        self.states = set(states)
-        self.alphabet: Set[Symbol] = {
-            symbol
-            for state in states
-            for symbol in state.symbols()
-        }
-
-        if initial_state not in states:
-            raise ValueError('Argument initial_state must be in states')
+        self.states: Set[State] = set()
+        self.alphabet: Set[Symbol] = set()
+        self._delta: Dict[State, Dict[Symbol, Set[State]]] = {}
         self.initial_state = initial_state
+        self.accept_states = set(accept_states)
 
-        accept_states = set(accept_states)
-        if not accept_states.issubset(states):
-            raise ValueError('Argument accept_states must be subset of states')
-        self.accept_states = accept_states
+        for (state, symbol), next_states in transitions.items():
+            for next_state in next_states:
+                self.add_transition(state, symbol, next_state)
+
+    def add_transition(self, source: State, symbol: Symbol, target: State):
+        self.states.add(source)
+        self.alphabet.add(symbol)
+        self.states.add(target)
+
+        self._delta.setdefault(source, dict()).setdefault(symbol, set())
+        self._delta[source][symbol].add(target)
+
+    @property
+    def transitions(self) -> Dict[Tuple[State, Symbol], Set[State]]:
+        return {
+            (state, symbol): next_states
+            for state, t in self._delta.items()
+            for symbol, next_states in t.items()
+        }
 
     def copy(self) -> 'FiniteAutomaton':
-        state_swap: Dict[State, State] = {
-            state: State(state.name) for state in self.states
-        }
+        return deepcopy(self)
 
-        for state in self.states:
-            for symbol, next_state_overlap in state.transitions.items():
-                for next_state in next_state_overlap:
-                    state_swap[state][symbol] = state_swap[next_state]
+    def _rename_states(self, table: Mapping[State, State]):
+        self.initial_state = table[self.initial_state]
+        self.states = {table[state] for state in self.states}
+        self.accept_states = {table[state] for state in self.accept_states}
 
-        return FiniteAutomaton(
-            set(state_swap.values()),
-            state_swap[self.initial_state],
-            {state_swap[state] for state in self.accept_states},
-        )
+        old_transitions = self.transitions
+        self._delta = {}
+
+        for (state, symbol), next_states in old_transitions.items():
+            for next_state in next_states:
+                self.add_transition(
+                    table[state],
+                    symbol,
+                    table[next_state],
+                )
 
     def prefix_state_names(self, prefix):
-        for state in self.states:
-            state.name = f'{prefix}{state.name}'
+        self._rename_states({
+            state: f'{prefix}{state}'
+            for state in self.states
+        })
 
     def reset_state_names(self):
-        self.initial_state.name = 'Q0'
-        for i, state in enumerate(self.states):
-            if state is self.initial_state:
-                continue
-            state.name = f'Q{i + 1}'
+        trans = {
+            state: f'Q{i}'
+            for i, state in enumerate(self.states, 1)
+            if state != self.initial_state
+        }
+        trans[self.initial_state] = 'Q0'
+        self._rename_states(trans)
 
 #     @classmethod
 #     def from_regular_grammar(cls, grammar):
@@ -176,21 +134,31 @@ class FiniteAutomaton:
 #     def minimize(self):
 #         ...
 
-    def evaluate(self, sentence: Sentence):
-        return any(
-            state in self.initial_state[sentence]
-            for state in self.accept_states
-        )
+    def transitate(self, state: State, symbol: Symbol) -> Set[State]:
+        return self._delta.get(state, {}).get(symbol, set())
+
+    def evaluate(self, sentence: Sentence) -> bool:
+        current_states = {self.initial_state}
+
+        for symbol in sentence:
+            current_states = {
+                next_state
+                for state in current_states
+                for next_state in self.transitate(state, symbol)
+            }
+
+        return any(state in self.accept_states
+                   for state in current_states)
 
     def complete(self):
         error_state = State('Qerror')
+        self.states.add(error_state)
 
+        current_transitions = self.transitions
         for state in self.states:
             for symbol in self.alphabet:
-                if not state[symbol]:
-                    state[symbol] = error_state
-
-        self.states.add(error_state)
+                if (state, symbol) not in current_transitions:
+                    self.add_transition(state, symbol, error_state)
 
     # def reverse(self):
     #     ...
@@ -208,43 +176,48 @@ class FiniteAutomaton:
 #     def difference(self, other):
 #         ...
 
+    def _replicate_transitions(self, from_state: State, to_state: State):
+        for symbol, next_states in self._delta[from_state].items():
+            for next_state in next_states:
+                self.add_transition(to_state, symbol, next_state)
+
     def union(self, other: 'FiniteAutomaton') -> 'FiniteAutomaton':
-        new_initial_state = State('Q0')
+        fa1 = self.copy()
+        fa1.prefix_state_names('fa1_')
 
-        for symbol, states in self.initial_state.transitions.items():
-            for state in states:
-                new_initial_state[symbol] = state
+        fa2 = other.copy()
+        fa2.prefix_state_names('fa2_')
 
-        for symbol, states in other.initial_state.transitions.items():
-            for state in states:
-                new_initial_state[symbol] = state
+        for (state, symbol), next_states in fa2.transitions.items():
+            for next_state in next_states:
+                fa1.add_transition(state, symbol, next_state)
 
-        new_states = set.union(self.states, other.states)
-        new_states.add(new_initial_state)
+        initial_state = State('q0')
+        fa1.accept_states.update(fa2.accept_states)
 
-        new_accept_states = set.union(self.accept_states, other.accept_states)
+        fa1._replicate_transitions(fa1.initial_state, initial_state)
+        fa1._replicate_transitions(fa2.initial_state, initial_state)
 
-        return FiniteAutomaton(
-            new_states,
-            new_initial_state,
-            new_accept_states,
-        ).copy()
+        fa1.initial_state = initial_state
+
+        fa1.reset_state_names()
+        return fa1
 
     def concatenate(self, other: 'FiniteAutomaton') -> 'FiniteAutomaton':
-        new_initial_state = self.initial_state
+        fa1 = self.copy()
+        fa1.prefix_state_names('fa1_')
 
-        for accept_state in self.accept_states:
-            for symbol, states in other.initial_state.transitions.items():
-                for state in states:
-                    accept_state[symbol] = state
+        fa2 = other.copy()
+        fa2.prefix_state_names('fa2_')
 
-        new_states = set.union(self.states, other.states)
-        new_states.add(new_initial_state)
+        for (state, symbol), next_states in fa2.transitions.items():
+            for next_state in next_states:
+                fa1.add_transition(state, symbol, next_state)
 
-        new_accept_states = other.accept_states
+        for state in fa1.accept_states:
+            fa1._replicate_transitions(fa2.initial_state, state)
 
-        return FiniteAutomaton(
-            new_states,
-            new_initial_state,
-            new_accept_states,
-        ).copy()
+        fa1.accept_states = fa2.accept_states
+
+        fa1.reset_state_names()
+        return fa1

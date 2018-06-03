@@ -1,21 +1,18 @@
-import pytest
-from kleeneup import *
-
-xfail = pytest.xfail
+from kleeneup import FiniteAutomaton, State, Symbol, Sentence
 
 
 def test_copy():
-    a = Symbol('a')
-    b = Symbol('b')
+    a, b = Symbol('a'), Symbol('b')
+    A, B = State('A'), State('B')
 
-    A = State('A')
-    B = State('B')
-    A[a] = B
-    A[b] = A
-    B[a] = A
-    B[b] = B
+    transitions = {
+        (A, a): {B},
+        (A, b): {A},
+        (B, a): {A},
+        (B, b): {B},
+    }
 
-    fa1 = FiniteAutomaton([A, B], A, [A])
+    fa1 = FiniteAutomaton(transitions, A, {A})
     fa2 = fa1.copy()
 
     assert fa1 is not fa2
@@ -24,12 +21,13 @@ def test_copy():
 def test_evaluate():
     a = Symbol('a')
 
-    A = State('A')
-    B = State('B')
-    A[a] = B
-    B[a] = A
+    A, B = State('A'), State('B')
+    transitions = {
+        (A, a): {B},
+        (B, a): {A},
+    }
 
-    fa = FiniteAutomaton([A, B], A, [A])
+    fa = FiniteAutomaton(transitions, A, {A})
 
     assert not fa.evaluate(Sentence('aaa'))
     assert fa.evaluate(Sentence(''))
@@ -37,18 +35,13 @@ def test_evaluate():
 
 
 def test_union():
-    a = Symbol('a')
-    b = Symbol('b')
+    a, b = Symbol('a'), Symbol('b')
 
-    A = State('A')
-    B = State('B')
-    A[a] = B
-    fa_1 = FiniteAutomaton([A, B], A, [B])
+    A, B = State('A'), State('B')
+    fa_1 = FiniteAutomaton({(A, a): B}, A, {B})
 
-    C = State('C')
-    D = State('D')
-    C[b] = D
-    fa_2 = FiniteAutomaton([C, D], C, [D])
+    C, D = State('C'), State('D')
+    fa_2 = FiniteAutomaton({(C, b): D}, C, {D})
 
     fa_union = FiniteAutomaton.union(fa_1, fa_2)
 
@@ -67,14 +60,11 @@ def test_concatenate():
 
     A = State('A')
     B = State('B')
-    A[a] = B
+    fa_1 = FiniteAutomaton({(A, a): B}, A, {B})
 
     C = State('C')
     D = State('D')
-    C[a] = D
-
-    fa_1 = FiniteAutomaton([A, B], A, [B])
-    fa_2 = FiniteAutomaton([C, D], C, [D])
+    fa_2 = FiniteAutomaton({(C, a): D}, C, {D})
 
     fa_concat = FiniteAutomaton.concatenate(fa_1, fa_2)
 
@@ -90,14 +80,14 @@ def test_complete():
 
     A = State('A')
     B = State('B')
-    A[a] = A
-    A[b] = B
+    transitions = {
+        (A, a): A,
+        (A, b): B,
+    }
 
-    fa = FiniteAutomaton([A, B], A, [B])
+    fa = FiniteAutomaton(transitions, A, {B})
 
-    complete_fa = fa.complete()
-
-    xfail("Not Implemented")
+    fa.complete()
 
 
 def test_negate():
@@ -106,16 +96,18 @@ def test_negate():
 
     A = State('A')
     B = State('B')
-    A[a] = A
-    A[b] = B
+    transitions = {
+        (A, a): A,
+        (A, b): B,
+    }
 
-    fa = FiniteAutomaton([A, B], A, [B])
+    fa = FiniteAutomaton(transitions, A, {B})
 
     assert not fa.evaluate(Sentence(''))
     assert not fa.evaluate(Sentence('aaa'))
     assert fa.evaluate(Sentence('ab'))
 
-    fa_n = fa.negate()
+    fa.negate()
 
     assert fa.evaluate(Sentence(''))
     assert fa.evaluate(Sentence('aaa'))
