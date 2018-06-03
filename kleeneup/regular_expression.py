@@ -33,6 +33,7 @@ class Lambda:
 
 
 class Operation(Enum):
+    """Descreve as possíveis operações em expressões regulares."""
     UNION = auto()
     CONCATENATION = auto()
     KLEENESTAR = auto()
@@ -41,15 +42,27 @@ class Operation(Enum):
 
 class StitchedBinaryTree:
     def __init__(self, data, left=None, right=None, seam=None):
+        """Retorna uma árvore binária sem costuras.
+
+        Parâmetros:
+        data  -- informação armazenada na árvore
+        left  -- subárvore da esquerda (padrão None)
+        right -- subárvore da direita (padrão None)
+        seam  -- árvore subindo a costura (padrão None)
+        """
         self.data = data
         self.left = left
         self.right = right
         self.seam = seam
-        self.visited_up = False
-        self.visited_down = False
 
     @classmethod
     def from_lark_tree(cls, l_tree):
+        """Retorna uma arvore binária sem costuras a partir de uma árvore de
+        derivação do módulo Lark.
+
+        Parâmetros:
+        l_tree -- árvore de derivação do módulo lark.
+        """
         if type(l_tree) is Tree:
             try:
                 left = cls.from_lark_tree(l_tree.children[0])
@@ -77,6 +90,7 @@ class StitchedBinaryTree:
             return StitchedBinaryTree(l_tree.value)
 
     def sew(self):
+        """Costura a árvore binária."""
         inorder = list(self.inorder())
 
         for i in range(0, len(inorder)):
@@ -95,6 +109,15 @@ class StitchedBinaryTree:
         visited_down=None,
         visited_up=None
     ):
+    """Retorna os símbolos terminais alcançáveis a partir de um nodo qualquer
+    dada a direção em que ele foi visitado.
+
+    Parâmetros:
+    direction     -- direção em que o nodo está sendo visitado ("UP"|"DOWN")
+    reachable     -- conjunto de símbolos terminais já alcançados (padrão None)
+    visited_down  -- conjunto de nodos já visitados na direção descendo (padrão None)
+    visited_up    -- conjunto de nodos já visitados na direção subindo (padrão None)
+    """
         if reachable is None:
             reachable = set()
 
@@ -109,29 +132,57 @@ class StitchedBinaryTree:
                 visited_down.add(self)
                 if self.data == Operation['UNION']:
                     self.left.reachable_symbols(
-                        'DOWN', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'DOWN',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
                     self.right.reachable_symbols(
-                        'DOWN', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'DOWN',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
 
                 elif self.data == Operation['CONCATENATION']:
                     self.left.reachable_symbols(
-                        'DOWN', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'DOWN',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
 
                 elif self.data == Operation['OPTION']:
                     self.left.reachable_symbols(
-                        'DOWN', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'DOWN',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
                     try:
                         self.seam.reachable_symbols(
-                            'UP', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                            'UP',
+                            reachable=reachable,
+                            visited_down=visited_down,
+                            visited_up=visited_up
+                        )
                     except AttributeError:
                         reachable.add(Lambda)
 
                 elif self.data == Operation['KLEENESTAR']:
                     self.left.reachable_symbols(
-                        'DOWN', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'DOWN',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
                     try:
                         self.seam.reachable_symbols(
-                            'UP', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                            'UP',
+                            reachable=reachable,
+                            visited_down=visited_down,
+                            visited_up=visited_up
+                        )
                     except AttributeError:
                         reachable.add(Lambda)
 
@@ -149,47 +200,70 @@ class StitchedBinaryTree:
                         else:
                             break
                     rightmost.seam.reachable_symbols(
-                        'UP', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'UP',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
 
                 elif self.data == Operation['CONCATENATION']:
                     self.right.reachable_symbols(
-                        'DOWN', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'DOWN',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
 
                 elif self.data == Operation['OPTION']:
                     try:
                         self.seam.reachable_symbols(
-                            'UP', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                            'UP',
+                            reachable=reachable,
+                            visited_down=visited_down,
+                            visited_up=visited_up
+                        )
                     except AttributeError:
                         reachable.add(Lambda)
 
                 elif self.data == Operation['KLEENESTAR']:
                     self.left.reachable_symbols(
-                        'DOWN', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                        'DOWN',
+                        reachable=reachable,
+                        visited_down=visited_down,
+                        visited_up=visited_up
+                    )
                     try:
                         self.seam.reachable_symbols(
-                            'UP', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                            'UP',
+                            reachable=reachable,
+                            visited_down=visited_down,
+                            visited_up=visited_up
+                        )
                     except AttributeError:
                         reachable.add(Lambda)
 
                 else:
                     try:
                         self.seam.reachable_symbols(
-                            'UP', reachable=reachable, visited_down=visited_down, visited_up=visited_up)
+                            'UP',
+                            reachable=reachable,
+                            visited_down=visited_down,
+                            visited_up=visited_up
+                        )
                     except AttributeError:
                         reachable.add(Lambda)
 
         return reachable
 
     def inorder(self):
+        """Retorna um generator da árvore em ordem"""
         if self.left:
-            for x in self.left.inorder():
-                yield x
+            yield from self.left.inorder()
 
         yield self
 
         if self.right:
-            for x in self.right.inorder():
-                yield x
+            yield from self.right.inorder()
 
     def __str__(self):
         return f"{self.data}"
@@ -200,9 +274,15 @@ class StitchedBinaryTree:
 
 class RegularExpression:
     def __init__(self, string):
+        """Retorna uma expressão regular.
+
+        Parâmetros:
+        string -- uma expressão regular escrita como uma string
+        """
         self.expression = string
 
     def to_regular_automaton(self):
+        """Retorna um autômato finito a partir de uma expressão regular."""
         d_tree = parser.parse(self.expression)
         s_tree = StitchedBinaryTree.from_lark_tree(d_tree)
         s_tree.sew()
