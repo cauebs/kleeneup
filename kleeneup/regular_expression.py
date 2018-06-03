@@ -2,7 +2,7 @@ from lark.tree import pydot__tree_to_png    # Just a neat utility function
 from lark import Lark, Tree
 from lark.lexer import Token
 from enum import Enum, auto
-from finite_automaton import FiniteAutomaton, State, Symbol
+from .finite_automaton import FiniteAutomaton, State, Symbol
 
 parser = Lark('''?e: e "|" a -> union
                    | a
@@ -109,15 +109,15 @@ class StitchedBinaryTree:
         visited_down=None,
         visited_up=None
     ):
-    """Retorna os símbolos terminais alcançáveis a partir de um nodo qualquer
-    dada a direção em que ele foi visitado.
+        """Retorna os símbolos terminais alcançáveis a partir de um nodo qualquer
+        dada a direção em que ele foi visitado.
 
-    Parâmetros:
-    direction     -- direção em que o nodo está sendo visitado ("UP"|"DOWN")
-    reachable     -- conjunto de símbolos terminais já alcançados (padrão None)
-    visited_down  -- conjunto de nodos já visitados na direção descendo (padrão None)
-    visited_up    -- conjunto de nodos já visitados na direção subindo (padrão None)
-    """
+        Parâmetros:
+        direction     -- direção em que o nodo está sendo visitado ("UP"|"DOWN")
+        reachable     -- conjunto de símbolos terminais já alcançados (padrão None)
+        visited_down  -- conjunto de nodos já visitados na direção descendo (padrão None)
+        visited_up    -- conjunto de nodos já visitados na direção subindo (padrão None)
+        """
         if reachable is None:
             reachable = set()
 
@@ -281,7 +281,7 @@ class RegularExpression:
         """
         self.expression = string
 
-    def to_regular_automaton(self):
+    def to_finite_automaton(self):
         """Retorna um autômato finito a partir de uma expressão regular."""
         d_tree = parser.parse(self.expression)
         s_tree = StitchedBinaryTree.from_lark_tree(d_tree)
