@@ -1,4 +1,5 @@
 from copy import deepcopy
+from itertools import product
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Union, NewType, Iterable, Iterator, Mapping
 from typing import Tuple, Set, Dict, List
@@ -189,10 +190,9 @@ class FiniteAutomaton:
         checked = set()
         while alive != checked:
             for alive_state in set.difference(alive, checked):
-                for state in self.states:
-                    for symbol in self.alphabet:
-                        if list(self._delta[state][symbol])[0] == alive_state:
-                            alive.add(state)
+                for state, symbol in product(self.states, self.alphabet):
+                    if self._delta[state][symbol].issubset(alive_state):
+                        alive.add(state)
                 checked.add(alive_state)
 
         for state in set.difference(self.states, alive):
@@ -204,6 +204,12 @@ class FiniteAutomaton:
         self.states = alive
 
         self.reset_state_names()
+
+    def is_dead(self, state: State) -> bool:
+        if state in self.accept_states:
+            return False
+
+        return all(self.is_dead(s) for _, s in self._delta[state].items())
 
     def remove_equivalent_states(self):
         self.complete()
@@ -273,9 +279,6 @@ class FiniteAutomaton:
 
         return fa_min
 
-    def __is_empty_language(self):
-        ...
-
     def transitate(self, state: State, symbol: Symbol) -> Set[State]:
         return self._delta.get(state, {}).get(symbol, set())
 
@@ -315,19 +318,43 @@ class FiniteAutomaton:
 
     def complete(self):
         error_state = State('Qerror')
-        self.states.add(error_state)
 
         current_transitions = self.transitions
-        for state in self.states:
-            for symbol in self.alphabet:
-                if (state, symbol) not in current_transitions:
-                    self.add_transition(state, symbol, error_state)
+        for state, symbol in product(self.states.copy(), self.alphabet):
+            if (state, symbol) not in current_transitions:
+                self.add_transition(state, symbol, error_state)
 
-    def reverse(self):
-        ...
+        if error_state in self.states:
+            for symbol in self.alphabet:
+                self.add_transition(error_state, symbol, error_state)
+
+    def reverse(self) -> 'FiniteAutomaton':
+        fa = self.copy()
+        old_transitions = fa.transitions
+        fa._delta = {}
+
+        for (state, symbol), next_states in old_transitions.items():
+            for next_state in next_states:
+                fa.add_transition(next_state, symbol, state)
+
+        new_initial_state = State('_Q0')
+        fa.states.add(new_initial_state)
+
+        for state in fa.accept_states:
+            fa._replicate_transitions(state, new_initial_state)
+
+        fa.accept_states = {fa.initial_state}
+        fa.initial_state = new_initial_state
+        fa.reset_state_names()
+
+        return fa
 
 #     def kleene_star(self):
 #         ...
+
+    def __eq__(self, other: 'FiniteAutomaton') -> bool:
+        fa = self.intersection(other.negate())
+        return fa.is_dead(fa.initial_state)
 
     def negate(self):
         fa = self.copy()
