@@ -36,9 +36,9 @@ class RegularGrammar:
                     raise SyntaxError(repr(rhs))
 
                 nt, t, e = rhs_match.groups()
-                rules.append((lhs_match, nt or e, t), start_symbol)
+                rules.append((lhs_match, nt or e, t))
 
-        return cls(rules)
+        return cls(rules, start_symbol)
 
     def __str__(self):
         return '\n'.join(
@@ -51,15 +51,14 @@ class RegularGrammar:
 
     def to_finite_automaton(self):
         from .finite_automaton import FiniteAutomaton
+        accept_states = {None}
+        fa = FiniteAutomaton(dict(), self.start_symbol, accept_states)
 
-        transitions = {}
-        accept_states = {''}
         for state, symbol, next_state in self.production_rules:
             if symbol == '&':
                 accept_states.add(state)
                 continue
-            transitions.setdefault((state, symbol), set()).add(next_state)
+            fa.add_transition(state, symbol, next_state)
 
-        fa = FiniteAutomaton(transitions, self.start_symbol, accept_states)
         fa.reset_state_names()
         return fa
