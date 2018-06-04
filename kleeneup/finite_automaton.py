@@ -352,7 +352,10 @@ class FiniteAutomaton:
 #     def kleene_star(self):
 #         ...
 
-    def __eq__(self, other: 'FiniteAutomaton') -> bool:
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, FiniteAutomaton):
+            return NotImplemented
+
         fa = self.intersection(other.negate())
         return fa.is_dead(fa.initial_state)
 
