@@ -49,16 +49,18 @@ class RegularGrammar:
             for nt1, group in groupby(self.production_rules, key=lambda x: x[0])
         )
 
-    def to_finite_automaton(self):
+    def to_finite_automaton(self, rename_states=True):
         from .finite_automaton import FiniteAutomaton
         accept_states = {None}
         fa = FiniteAutomaton(dict(), self.start_symbol, accept_states)
 
         for state, symbol, next_state in self.production_rules:
             if symbol == '&':
-                accept_states.add(state)
+                fa.accept_states.add(state)
                 continue
             fa.add_transition(state, symbol, next_state)
 
-        fa.reset_state_names()
+        if rename_states:
+            fa.reset_state_names()
+
         return fa
