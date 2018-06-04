@@ -107,8 +107,86 @@ def test_negate():
     assert not fa.evaluate(Sentence('aaa'))
     assert fa.evaluate(Sentence('ab'))
 
-    fa.negate()
+    n_fa = fa.negate()
 
-    assert fa.evaluate(Sentence(''))
-    assert fa.evaluate(Sentence('aaa'))
-    assert not fa.evaluate(Sentence('ab'))
+    assert n_fa.evaluate(Sentence(''))
+    assert n_fa.evaluate(Sentence('aaa'))
+    assert not n_fa.evaluate(Sentence('ab'))
+
+
+def test_remove_unreachable():
+    a = Symbol('a')
+    b = Symbol('b')
+
+    A = State('A')
+    B = State('B')
+    C = State('C')
+    D = State('D')
+    E = State('E')
+    F = State('F')
+    G = State('G')
+    H = State('H')
+
+    transitions = {
+        (A, a): G,
+        (A, b): B,
+        (B, a): F,
+        (B, b): E,
+        (C, a): C,
+        (C, b): G,
+        (D, a): A,
+        (D, b): H,
+        (E, a): E,
+        (E, b): A,
+        (F, a): B,
+        (F, b): C,
+        (G, a): G,
+        (G, b): F,
+        (H, a): H,
+        (H, b): D,
+    }
+
+    fa = FiniteAutomaton(transitions, A, [A, D, G])
+
+    fa.remove_unreachable_states()
+
+    assert len(fa.states) == 6
+
+
+def test_minimize():
+    a = Symbol('a')
+    b = Symbol('b')
+
+    A = State('A')
+    B = State('B')
+    C = State('C')
+    D = State('D')
+    E = State('E')
+    F = State('F')
+    G = State('G')
+    H = State('H')
+
+    transitions = {
+        (A, a): G,
+        (A, b): B,
+        (B, a): F,
+        (B, b): E,
+        (C, a): C,
+        (C, b): G,
+        (D, a): A,
+        (D, b): H,
+        (E, a): E,
+        (E, b): A,
+        (F, a): B,
+        (F, b): C,
+        (G, a): G,
+        (G, b): F,
+        (H, a): H,
+        (H, b): D,
+    }
+
+    fa = FiniteAutomaton(transitions, A, [A, D, G])
+
+    fa_min = fa.minimize()
+
+    assert len(fa_min.states) == 4
