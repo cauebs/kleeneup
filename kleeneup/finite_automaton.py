@@ -1,7 +1,7 @@
 from copy import deepcopy
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Union, NewType, Iterable, Iterator, Mapping
-from typing import Tuple, Set, Dict
+from typing import Tuple, Set, Dict, List
 
 
 class Symbol:
@@ -112,8 +112,7 @@ class FiniteAutomaton:
     def reset_state_names(self):
         trans = {
             state: f'Q{i}'
-            for i, state in enumerate(self.states, 1)
-            if state != self.initial_state
+            for i, state in enumerate(self.states - {self.initial_state}, 1)
         }
         trans[self.initial_state] = 'Q0'
         self.rename_states(trans)
@@ -169,6 +168,27 @@ class FiniteAutomaton:
 
         return any(state in self.accept_states
                    for state in current_states)
+
+    def gen_sentences(self, length: int) -> List[Sentence]:
+        current_iteration = {(self.initial_state, '')}
+
+        for i in range(length):
+            next_iteration = set()
+
+            for state, sentence in current_iteration:
+                for symbol, next_states in self._delta.get(state, {}).items():
+                    new_sentence = sentence + str(symbol)
+
+                    for next_state in next_states:
+                        next_iteration.add((next_state, new_sentence))
+
+            current_iteration = next_iteration
+
+        return [
+            Sentence(sentence)
+            for state, sentence in current_iteration
+            if state in self.accept_states
+        ]
 
     def complete(self):
         error_state = State('Qerror')
