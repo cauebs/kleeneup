@@ -209,7 +209,11 @@ class FiniteAutomaton:
         if state in self.accept_states:
             return False
 
-        return all(self.is_dead(s) for _, s in self._delta[state].items())
+        return all(
+            self.is_dead(s)
+            for _, states in self._delta[state].items()
+            for s in states
+        )
 
     def remove_equivalent_states(self):
         self.complete()
