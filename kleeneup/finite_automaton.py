@@ -20,6 +20,11 @@ class Symbol:
     def __hash__(self) -> int:
         return hash(repr(self))
 
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, Symbol):
+            return NotImplemented
+        return self.value < other.value
+
     def __eq__(self, other) -> bool:
         if isinstance(other, Symbol):
             return self.value == other.value
