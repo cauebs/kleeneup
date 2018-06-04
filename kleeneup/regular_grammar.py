@@ -1,16 +1,9 @@
 import re
+from itertools import groupby
 
 
-LHS_REGEX = re.compile(r'([A-Z]\'*)')
-RHS_REGEX = re.compile(r'([a-z0-9&])([A-Z]\'*)?')
-
-
-def parse_rules(line):
-    lhs, rhs = line.split('->', maxsplit=1)
-
-    head = LHS_REGEX.findall(lhs)[0]
-    return [(head, *RHS_REGEX.findall(body)[0])
-            for body in rhs.split('|')]
+LHS_REGEX = re.compile(r'^([A-Z]\'*)$', re.X)
+RHS_REGEX = re.compile(r'^([a-z0-9])([A-Z]\'*)?|(&)$', re.X)
 
 
 class RegularGrammar:
@@ -22,23 +15,51 @@ class RegularGrammar:
 
     @classmethod
     def from_string(cls, s):
-        return cls([rule
-                    for line in s.strip().splitlines()
-                    for rule in parse_rules(line)])
+        rules = []
 
-    def to_string(self):
+        for i, line in enumerate(s.strip().splitlines()):
+            lhs, line = line.split('->')
+            lhs = lhs.strip()
+
+            lhs_match = LHS_REGEX.fullmatch(lhs).groups()[0]
+            if not lhs_match:
+                raise SyntaxError(repr(lhs))
+
+            if i == 0:
+                start_symbol = lhs_match
+
+            for rhs in line.split('|'):
+                rhs = rhs.strip()
+
+                rhs_match = RHS_REGEX.fullmatch(rhs)
+                if not rhs_match:
+                    raise SyntaxError(repr(rhs))
+
+                nt, t, e = rhs_match.groups()
+                rules.append((lhs_match, nt or e, t), start_symbol)
+
+        return cls(rules)
+
+    def __str__(self):
         return '\n'.join(
-            '{} -> {}{}'.format(*rule)
-            for rule in self.production_rules
+            f'{nt1} -> ' + ' | '.join(
+                f'{t}{nt2 if nt2 is not None else ""}'
+                for _, t, nt2 in group
+            )
+            for nt1, group in groupby(self.production_rules, key=lambda x: x[0])
         )
 
     def to_finite_automaton(self):
         from .finite_automaton import FiniteAutomaton
 
         transitions = {}
+        accept_states = {''}
         for state, symbol, next_state in self.production_rules:
+            if symbol == '&':
+                accept_states.add(state)
+                continue
             transitions.setdefault((state, symbol), set()).add(next_state)
 
-        fa = FiniteAutomaton(transitions, self.start_symbol, {''})
+        fa = FiniteAutomaton(transitions, self.start_symbol, accept_states)
         fa.reset_state_names()
         return fa
