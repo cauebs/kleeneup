@@ -36,9 +36,9 @@ class RegularGrammar:
                     raise SyntaxError(repr(rhs))
 
                 nt, t, e = rhs_match.groups()
-                rules.append((lhs_match, nt or e, t), start_symbol)
+                rules.append((lhs_match, nt or e, t))
 
-        return cls(rules)
+        return cls(rules, start_symbol)
 
     def __str__(self):
         return '\n'.join(

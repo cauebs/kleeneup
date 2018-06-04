@@ -23,7 +23,6 @@ class MainWindow(qtw.QMainWindow):
         table.setRowCount(len(fa.states))
         table.setColumnCount(len(fa.alphabet))
 
-        print('fa.states={fa.states}')
         for i, state in enumerate(sorted(fa.states)):
             label = str(state)
 
@@ -40,41 +39,6 @@ class MainWindow(qtw.QMainWindow):
                         j, qtw.QTableWidgetItem(str(symbol)))
                 table.setItem(
                     i, j, qtw.QTableWidgetItem(str(fa.transitate(state, symbol) or '-')))
-
-    def display_automaton_left(self):
-        i = self.fa_select_left.currentIndex()
-        fa = self.ctrl.automata[i]
-
-        table.setRowCount(len(fa.states))
-        table.setColumnCount(len(fa.alphabet))
-
-        print('fa.states={fa.states}')
-        for i, state in enumerate(fa.states):
-            label = str(state)
-
-            if state in fa.accept_states:
-                label = f'*{label}'
-            if state == fa.initial_state:
-                label = f'->{label}'
-
-            table.setVerticalHeaderItem(
-                i, qtw.QTableWidgetItem(label))
-            for j, symbol in enumerate(fa.alphabet):
-                if i == 0:
-                    table.setHorizontalHeaderItem(
-                        j, qtw.QTableWidgetItem(str(symbol)))
-                table.setItem(
-                    i, j, qtw.QTableWidgetItem(str(fa.transitate(state, symbol) or '-')))
-        # table.setRowCount(2)
-        # table.setColumnCount(2)
-
-        # table.setHorizontalHeaderLabels(['a', 'b'])
-        # table.setVerticalHeaderLabels(['->Q0', '*Q1'])
-
-        # table.setItem(0, 0, qtw.QTableWidgetItem("Q1"))
-        # table.setItem(0, 1, qtw.QTableWidgetItem("Q0"))
-        # table.setItem(1, 0, qtw.QTableWidgetItem("Q0"))
-        # table.setItem(1, 1, qtw.QTableWidgetItem("Q1"))
 
     def update_combo_boxes(self, index):
         self.fa_select_left.addItem(f'M{index}')
@@ -115,8 +79,18 @@ class InputDialog(qtw.QDialog):
         super(InputDialog, self).__init__()
         uic.loadUi('./kleeneup/forms/input_dialog.ui', self)
 
-        self.accepted.connect(self.create_re)
+        self.accepted.connect(self.create_automaton)
 
-    def create_re(self):
+    def create_automaton(self):
+        if self.regex_btn.isChecked():
+            self.create_from_re()
+        else:
+            self.create_from_rg()
+
+    def create_from_re(self):
         re = self.textEdit.toPlainText()
         self.ctrl.create_automaton_from_re(re)
+
+    def create_from_rg(self):
+        rg = self.textEdit.toPlainText()
+        self.ctrl.create_automaton_from_rg(rg)

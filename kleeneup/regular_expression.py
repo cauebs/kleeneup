@@ -22,7 +22,7 @@ parser = Lark('''?e: e "|" a -> union
                  %import common.WS
                  %ignore WS
 
-                 SYMBOL: DIGIT | LCASE_LETTER
+                 SYMBOL: DIGIT | LCASE_LETTER | "&"
     ''', start='e')
 
 
