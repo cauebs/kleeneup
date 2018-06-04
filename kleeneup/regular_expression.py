@@ -1,6 +1,4 @@
-from lark.tree import pydot__tree_to_png    # Just a neat utility function
 from lark import Lark, Tree
-from lark.lexer import Token
 from enum import Enum, auto
 from .finite_automaton import FiniteAutomaton, State, Symbol
 
