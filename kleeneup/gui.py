@@ -94,22 +94,33 @@ class MainWindow(qtw.QMainWindow):
 
 class ExportDialog(qtw.QDialog):
     def __init__(self, ctrl):
-        self.ctrl = ctrl
         super(ExportDialog, self).__init__()
+        self.ctrl = ctrl
         uic.loadUi('./kleeneup/forms/export_dialog.ui', self)
-
+        self.populate_combo_box()
         self.accepted.connect(self.show_grammar_out)
 
+    def populate_combo_box(self):
+        for i in range(0, len(self.ctrl.automata)):
+            self.fa_combo.addItem(f'M{i+1}')
+
     def show_grammar_out(self):
-        self.grammar_out_window = GrammarOutDialog(self.ctrl)
+        index = self.fa_combo.currentIndex()
+        grammar = self.ctrl.automata[index].to_regular_grammar()
+
+        text = str(grammar)
+
+        self.grammar_out_window = GrammarOutDialog(
+            self.ctrl, text)
         self.grammar_out_window.show()
 
 
 class GrammarOutDialog(qtw.QDialog):
-    def __init__(self, ctrl):
-        self.ctrl = ctrl
+    def __init__(self, ctrl, txt):
         super(GrammarOutDialog, self).__init__()
+        self.ctrl = ctrl
         uic.loadUi('./kleeneup/forms/grammar_out_dialog.ui', self)
+        self.text_box.setPlainText(txt)
 
 
 class InputDialog(qtw.QDialog):
