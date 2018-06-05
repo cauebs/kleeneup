@@ -10,6 +10,7 @@ class MainWindow(qtw.QMainWindow):
 
         self.action_open_input.triggered.connect(self.show_input_window)
         self.action_aut2gram.triggered.connect(self.show_export_window)
+        self.action_test_automata.triggered.connect(self.show_test_window)
 
         def update_left_table():
             index = self.fa_select_left.currentIndex()
@@ -88,39 +89,93 @@ class MainWindow(qtw.QMainWindow):
         self.input_window.show()
 
     def show_export_window(self):
-        self.export_window = ExportDialog(self.ctrl)
+        self.export_window = GrammarOutDialog(self.ctrl)
         self.export_window.show()
 
+    def show_test_window(self):
+        self.test_window = AutomataTestDialog(self.ctrl)
+        self.test_window.show()
 
-class ExportDialog(qtw.QDialog):
+
+class AutomataTestDialog(qtw.QDialog):
     def __init__(self, ctrl):
-        super(ExportDialog, self).__init__()
+        super(AutomataTestDialog, self).__init__()
+        uic.loadUi('./kleeneup/forms/automata_test_dialog.ui', self)
         self.ctrl = ctrl
-        uic.loadUi('./kleeneup/forms/export_dialog.ui', self)
+        self.output = ""
+
+        self.fa_combo.currentIndexChanged.connect(self.change_current_fa)
+        self.eval_btn.clicked.connect(self.show_eval_results)
+        self.list_btn.clicked.connect(self.show_sentences)
+
         self.populate_combo_box()
-        self.accepted.connect(self.show_grammar_out)
+
+    def show_eval_results(self):
+        index = self.fa_combo.currentIndex()
+
+        sentences = self.sentence_input.toPlainText()
+        sentences = sentences.replace(' ', '').replace('\n', '').rstrip(';')
+        sentences = sentences.split(';')
+
+        results = self.ctrl.eval_sentences(index, sentences)
+
+        text = ""
+        text += f"--- Autômato M{index+1} ---\n"
+        for s, r in results:
+            text += f"'{s}': "
+            if r:
+                text += "ACEITA\n"
+            else:
+                text += "REJEITADA\n"
+        text += "\n"
+
+        self.output += text
+        self.text_output.setPlainText(self.output)
+
+    def show_sentences(self):
+        index = self.fa_combo.currentIndex()
+        n = self.size_input.value()
+
+        sentences = self.ctrl.list_sentences(index, n)
+
+        text = ""
+        text += f"--- Autômato M{index+1} ---\n"
+        text += f"Sentenças de tamanho {n}:\n"
+        for s in sentences:
+            text += f"'{s}'\n"
+        text += "\n"
+
+        self.output += text
+        self.text_output.setPlainText(self.output)
+
+    def change_current_fa(self):
+        index = self.fa_combo.currentIndex()
+        self.current_fa = self.ctrl.automata[index]
 
     def populate_combo_box(self):
         for i in range(0, len(self.ctrl.automata)):
             self.fa_combo.addItem(f'M{i+1}')
 
-    def show_grammar_out(self):
-        index = self.fa_combo.currentIndex()
-        grammar = self.ctrl.automata[index].to_regular_grammar()
-
-        text = str(grammar)
-
-        self.grammar_out_window = GrammarOutDialog(
-            self.ctrl, text)
-        self.grammar_out_window.show()
-
 
 class GrammarOutDialog(qtw.QDialog):
-    def __init__(self, ctrl, txt):
+    def __init__(self, ctrl):
         super(GrammarOutDialog, self).__init__()
-        self.ctrl = ctrl
         uic.loadUi('./kleeneup/forms/grammar_out_dialog.ui', self)
-        self.text_box.setPlainText(txt)
+        self.ctrl = ctrl
+
+        self.fa_combo.currentIndexChanged.connect(self.display_grammar)
+
+        self.populate_combo_box()
+
+    def populate_combo_box(self):
+        for i in range(0, len(self.ctrl.automata)):
+            self.fa_combo.addItem(f'M{i+1}')
+
+    def display_grammar(self):
+        index = self.fa_combo.currentIndex()
+        grammar = self.ctrl.automata[index].to_regular_grammar()
+        text = str(grammar)
+        self.text_box.setPlainText(text)
 
 
 class InputDialog(qtw.QDialog):

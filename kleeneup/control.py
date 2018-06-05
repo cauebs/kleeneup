@@ -1,7 +1,7 @@
 from lark import UnexpectedInput, ParseError
 from .regular_expression import RegularExpression
 from .regular_grammar import RegularGrammar
-from .finite_automaton import FiniteAutomaton
+from .finite_automaton import FiniteAutomaton, Sentence
 
 from .gui import MainWindow
 
@@ -136,3 +136,16 @@ class Control:
 
         self.main_window.display_automaton(
             self.main_window.table_right, len(self.automata)-1)
+
+    def list_sentences(self, index, length):
+        af = self.automata[index]
+        return af.gen_sentences(length)
+
+    def eval_sentences(self, index, sentences):
+        af = self.automata[index]
+        results = []
+        for s in sentences:
+            result = af.evaluate(Sentence(s))
+            results.append((s, result))
+
+        return results

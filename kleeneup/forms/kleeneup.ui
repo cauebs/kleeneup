@@ -132,20 +132,27 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuExportar">
+   <widget class="QMenu" name="menu_export">
     <property name="title">
      <string>Exportar</string>
     </property>
     <addaction name="action_aut2gram"/>
    </widget>
-   <widget class="QMenu" name="menuImportar">
+   <widget class="QMenu" name="menu_import">
     <property name="title">
      <string>Importar</string>
     </property>
     <addaction name="action_open_input"/>
    </widget>
-   <addaction name="menuImportar"/>
-   <addaction name="menuExportar"/>
+   <widget class="QMenu" name="menu_file">
+    <property name="title">
+     <string>Arquivo</string>
+    </property>
+    <addaction name="action_test_automata"/>
+   </widget>
+   <addaction name="menu_file"/>
+   <addaction name="menu_import"/>
+   <addaction name="menu_export"/>
   </widget>
   <action name="action_aut2gram">
    <property name="text">
@@ -155,6 +162,11 @@
   <action name="action_open_input">
    <property name="text">
     <string>Expressão/Gramática</string>
+   </property>
+  </action>
+  <action name="action_test_automata">
+   <property name="text">
+    <string>Testar autômato</string>
    </property>
   </action>
  </widget>
