@@ -1,7 +1,8 @@
 from copy import deepcopy
+from itertools import product
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Union, NewType, Iterable, Iterator, Mapping
-from typing import Tuple, Set, Dict
+from typing import Tuple, Set, Dict, List
 
 
 class Symbol:
@@ -18,6 +19,11 @@ class Symbol:
 
     def __hash__(self) -> int:
         return hash(repr(self))
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, Symbol):
+            return NotImplemented
+        return self.value < other.value
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Symbol):
@@ -112,8 +118,7 @@ class FiniteAutomaton:
     def reset_state_names(self):
         trans = {
             state: f'Q{i}'
-            for i, state in enumerate(self.states, 1)
-            if state != self.initial_state
+            for i, state in enumerate(self.states - {self.initial_state}, 1)
         }
         trans[self.initial_state] = 'Q0'
         self.rename_states(trans)
@@ -148,11 +153,140 @@ class FiniteAutomaton:
 #     def from_regular_expression(cls, expr):
 #         ...
 
-#     def determinize(self):
-#         ...
+    def determinize(self):
+        ...
 
-#     def minimize(self):
-#         ...
+    def minimize(self):
+        fa = self.copy()
+        fa.remove_unreachable_states()
+        # fa.remove_dead_states()
+        if fa.initial_state is None:
+            q0 = State('Q0')
+            transitions = {}
+            for symbol in self.alphabet:
+                transitions[(q0, symbol)] = q0
+
+            return FiniteAutomaton(q0, transitions, q0, set())
+        else:
+            fa_min = fa.remove_equivalent_states()
+
+        return fa_min
+
+    def remove_unreachable_states(self):
+        reachable = set([self.initial_state])
+        checked = set()
+
+        while reachable != checked:
+            not_checked = set.difference(self.states, checked)
+            for state in set.intersection(not_checked, reachable):
+                for symbol in self.alphabet:
+                    reachable.add(list(self._delta[state][symbol])[0])
+                checked.add(state)
+
+        for state in set.difference(self.states, reachable):
+            self._delta.pop(state)
+
+        self.accept_states = set.intersection(reachable, self.accept_states)
+        self.states = reachable
+        self.reset_state_names()
+
+    def remove_dead_states(self):
+        alive = self.accept_states.copy()
+        checked = set()
+        while alive != checked:
+            for alive_state in set.difference(alive, checked):
+                for state, symbol in product(self.states, self.alphabet):
+                    if self._delta[state][symbol].issubset(alive_state):
+                        alive.add(state)
+                checked.add(alive_state)
+
+        for state in set.difference(self.states, alive):
+            self._delta.pop(state)
+
+        if self.initial_state not in alive:
+            self.initial_state = None
+
+        self.states = alive
+
+        self.reset_state_names()
+
+    def is_dead(self, state: State) -> bool:
+        if state in self.accept_states:
+            return False
+
+        return all(
+            self.is_dead(s)
+            for _, states in self._delta[state].items()
+            for s in states
+        )
+
+    def remove_equivalent_states(self):
+        self.complete()
+
+        f = self.accept_states.copy()
+        k_f = set.difference(self.states, f)
+
+        class_map = {}
+        for state in f:
+            class_map[state] = f
+        for state in k_f:
+            class_map[state] = k_f
+
+        eq_classes = [f, k_f]
+        while True:
+            old_classes = eq_classes.copy()
+            for eq_class in eq_classes:
+                new_class = set()
+                for i in range(0, len(eq_class)-1):
+                    for j in range(i, len(eq_class)):
+                        for symbol in self.alphabet:
+                            next_i = list(self._delta[list(eq_class)[
+                                i]][symbol])[0]
+                            next_j = list(self._delta[list(eq_class)[
+                                j]][symbol])[0]
+
+                            if class_map[next_i] != class_map[next_j]:
+                                new_class.add(list(eq_class)[j])
+                                class_map[list(eq_class)[j]] = new_class
+                                break
+
+                for eq_class in eq_classes:
+                    eq_class = set.difference(eq_class, new_class)
+
+                if len(new_class) > 0:
+                    eq_classes.append(new_class)
+
+            if old_classes == eq_classes:
+                break
+
+        new_transitions = {}
+        i = 0
+        class2state_map = {}
+        for eq_class in eq_classes:
+            new_state = State(f'Q{i}')
+            class2state_map[frozenset(eq_class)] = new_state
+            i += 1
+
+        for eq_class in eq_classes:
+            old_state = list(eq_class)[0]
+            for symbol in self.alphabet:
+                new_transitions[(class2state_map[frozenset(eq_class)], symbol)
+                                ] = {class2state_map[frozenset(class_map[list(self._delta[old_state][symbol])[0]])]}
+
+        new_initial_state = class2state_map[frozenset(
+            class_map[self.initial_state])]
+
+        new_accept_states = set()
+        for state in self.accept_states:
+            new_accept_states.add(class2state_map[frozenset(class_map[state])])
+
+        fa_min = FiniteAutomaton(
+            new_transitions,
+            new_initial_state,
+            new_accept_states
+        )
+
+        return fa_min
 
     def transitate(self, state: State, symbol: Symbol) -> Set[State]:
         return self._delta.get(state, {}).get(symbol, set())
@@ -170,31 +304,91 @@ class FiniteAutomaton:
         return any(state in self.accept_states
                    for state in current_states)
 
+    def gen_sentences(self, length: int) -> List[Sentence]:
+        current_iteration = {(self.initial_state, '')}
+
+        for i in range(length):
+            next_iteration = set()
+
+            for state, sentence in current_iteration:
+                for symbol, next_states in self._delta.get(state, {}).items():
+                    new_sentence = sentence + str(symbol)
+
+                    for next_state in next_states:
+                        next_iteration.add((next_state, new_sentence))
+
+            current_iteration = next_iteration
+
+        return [
+            Sentence(sentence)
+            for state, sentence in current_iteration
+            if state in self.accept_states
+        ]
+
     def complete(self):
         error_state = State('Qerror')
-        self.states.add(error_state)
 
         current_transitions = self.transitions
-        for state in self.states:
-            for symbol in self.alphabet:
-                if (state, symbol) not in current_transitions:
-                    self.add_transition(state, symbol, error_state)
+        for state, symbol in product(self.states.copy(), self.alphabet):
+            if (state, symbol) not in current_transitions:
+                self.add_transition(state, symbol, error_state)
 
-    def reverse(self):
-        ...
+        if error_state in self.states:
+            for symbol in self.alphabet:
+                self.add_transition(error_state, symbol, error_state)
+
+    def reverse(self) -> 'FiniteAutomaton':
+        fa = self.copy()
+        old_transitions = fa.transitions
+        fa._delta = {}
+
+        for (state, symbol), next_states in old_transitions.items():
+            for next_state in next_states:
+                fa.add_transition(next_state, symbol, state)
+
+        new_initial_state = State('_Q0')
+        fa.states.add(new_initial_state)
+
+        for state in fa.accept_states:
+            fa._replicate_transitions(state, new_initial_state)
+
+        fa.accept_states = {fa.initial_state}
+        fa.initial_state = new_initial_state
+        fa.reset_state_names()
+
+        return fa
 
 #     def kleene_star(self):
 #         ...
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, FiniteAutomaton):
+            return NotImplemented
+
+        fa = self.intersection(other.negate())
+        return fa.is_dead(fa.initial_state)
+
     def negate(self):
-        self.complete()
-        self.accept_states = self.states - self.accept_states
+        fa = self.copy()
+        fa.complete()
+        fa.accept_states = self.states - self.accept_states
+        return fa
 
-#     def intersection(self, other):
-#         ...
+    def intersection(self, other):
+        n_fa1 = self.negate()
+        n_fa2 = other.negate()
 
-#     def difference(self, other):
-#         ...
+        n_fa12 = n_fa1.union(n_fa2)
+
+        fa_intersection = n_fa12.negate()
+        return fa_intersection
+
+    def difference(self, other):
+        fa1 = self.copy()
+        n_fa2 = other.negate()
+
+        fa_difference = fa1.intersection(n_fa2)
+        return fa_difference
 
     def _replicate_transitions(self, from_state: State, to_state: State):
         for symbol, next_states in self._delta[from_state].items():
