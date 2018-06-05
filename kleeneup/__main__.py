@@ -5,7 +5,7 @@ from .control import Control
 
 def main():
     app = qtw.QApplication(sys.argv)
-    ctrl = Control()
+    Control()
     sys.exit(app.exec_())
 
 

@@ -11,11 +11,16 @@ class MainWindow(qtw.QMainWindow):
         self.action_open_input.triggered.connect(self.show_input_window)
         self.action_aut2gram.triggered.connect(self.show_export_window)
 
-        self.fa_select_left.currentIndexChanged.connect(
-            lambda: self.display_automaton(self.table_left, self.fa_select_left.currentIndex()))
+        def update_left_table():
+            index = self.fa_select_left.currentIndex()
+            self.display_automaton(self.table_left, index)
 
-        self.fa_select_center.currentIndexChanged.connect(
-            lambda: self.display_automaton(self.table_center, self.fa_select_center.currentIndex()))
+        def update_center_table():
+            index = self.fa_select_center.currentIndex()
+            self.display_automaton(self.table_center, index)
+
+        self.fa_select_left.currentIndexChanged.connect(update_left_table)
+        self.fa_select_center.currentIndexChanged.connect(update_center_table)
 
     def display_automaton(self, table, i):
         fa = self.ctrl.automata[i]
@@ -24,21 +29,32 @@ class MainWindow(qtw.QMainWindow):
         table.setColumnCount(len(fa.alphabet))
 
         for i, state in enumerate(sorted(fa.states)):
-            label = str(state)
+            label = ''
 
             if state in fa.accept_states:
-                label = f'*{label}'
-            if state == fa.initial_state:
-                label = f'->{label}'
+                label += '*'
 
-            table.setVerticalHeaderItem(
-                i, qtw.QTableWidgetItem(label))
+            if state == fa.initial_state:
+                label += '->'
+
+            rows_header = qtw.QTableWidgetItem(label + str(state))
+            table.setVerticalHeaderItem(i, rows_header)
+
             for j, symbol in enumerate(sorted(fa.alphabet)):
                 if i == 0:
-                    table.setHorizontalHeaderItem(
-                        j, qtw.QTableWidgetItem(str(symbol)))
-                table.setItem(
-                    i, j, qtw.QTableWidgetItem(str(fa.transitate(state, symbol) or '-')))
+                    columns_header = qtw.QTableWidgetItem(str(symbol))
+                    table.setHorizontalHeaderItem(j, columns_header)
+
+                cell_states = fa.transitate(state, symbol)
+                if not cell_states:
+                    content = '-'
+                elif len(cell_states) == 1:
+                    content = cell_states.pop()
+                else:
+                    content = '{' + ', '.join(sorted(cell_states)) + '}'
+
+                cell = qtw.QTableWidgetItem(content)
+                table.setItem(i, j, cell)
 
     def update_combo_boxes(self, index):
         self.fa_select_left.addItem(f'M{index}')
