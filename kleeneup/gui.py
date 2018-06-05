@@ -21,6 +21,29 @@ class MainWindow(qtw.QMainWindow):
 
         self.fa_select_left.currentIndexChanged.connect(update_left_table)
         self.fa_select_center.currentIndexChanged.connect(update_center_table)
+        self.op_select.currentIndexChanged.connect(self.update_center)
+
+        self.apply_op_btn.clicked.connect(self.apply_operation)
+
+    def update_center(self):
+        index = self.op_select.currentIndex()
+        if index > 3:
+            self.fa_select_center.setEnabled(False)
+            self.table_center.setEnabled(False)
+        else:
+            self.fa_select_center.setEnabled(True)
+            self.table_center.setEnabled(True)
+
+    def apply_operation(self):
+        lhs = self.fa_select_left.currentIndex()
+        rhs = self.fa_select_center.currentIndex()
+
+        op = self.op_select.currentIndex()
+
+        if op > 3:
+            self.ctrl.apply_operation(lhs, op)
+        else:
+            self.ctrl.apply_operation(lhs, op, rhs=rhs)
 
     def display_automaton(self, table, i):
         fa = self.ctrl.automata[i]
@@ -49,7 +72,7 @@ class MainWindow(qtw.QMainWindow):
                 if not cell_states:
                     content = '-'
                 elif len(cell_states) == 1:
-                    content = cell_states.pop()
+                    content, *_ = cell_states
                 else:
                     content = '{' + ', '.join(sorted(cell_states)) + '}'
 
