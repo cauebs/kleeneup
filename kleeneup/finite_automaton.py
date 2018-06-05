@@ -371,7 +371,7 @@ class FiniteAutomaton:
     def negate(self):
         fa = self.copy()
         fa.complete()
-        fa.accept_states = self.states - self.accept_states
+        fa.accept_states = fa.states - fa.accept_states
         return fa
 
     def intersection(self, other):
@@ -407,6 +407,8 @@ class FiniteAutomaton:
                 fa1.add_transition(state, symbol, next_state)
 
         initial_state = State('q0')
+        fa1.states.add(initial_state)
+
         fa1.accept_states.update(fa2.accept_states)
 
         fa1._replicate_transitions(fa1.initial_state, initial_state)

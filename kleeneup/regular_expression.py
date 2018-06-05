@@ -22,7 +22,7 @@ parser = Lark('''?e: e "|" a -> union
                  %import common.WS
                  %ignore WS
 
-                 SYMBOL: DIGIT | LCASE_LETTER
+                 SYMBOL: DIGIT | LCASE_LETTER | "&"
     ''', start='e')
 
 
@@ -331,13 +331,13 @@ class RegularExpression:
                         compositions[new_comp] = new_state
 
                         transitions[(compositions[current_comp], s)
-                                    ] = new_state
+                                    ] = {new_state}
                         if Lambda in new_comp:
                             accept_states.add(new_state)
 
                         state_index += 1
                     else:
                         transitions[(compositions[current_comp], s)
-                                    ] = compositions[new_comp]
+                                    ] = {compositions[new_comp]}
 
         return FiniteAutomaton(transitions, initial_state, accept_states)
