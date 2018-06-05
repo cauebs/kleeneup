@@ -81,8 +81,8 @@ def test_complete():
     A = State('A')
     B = State('B')
     transitions = {
-        (A, a): A,
-        (A, b): B,
+        (A, a): {A},
+        (A, b): {B},
     }
 
     fa = FiniteAutomaton(transitions, A, {B})
@@ -97,8 +97,8 @@ def test_negate():
     A = State('A')
     B = State('B')
     transitions = {
-        (A, a): A,
-        (A, b): B,
+        (A, a): {A},
+        (A, b): {B},
     }
 
     fa = FiniteAutomaton(transitions, A, {B})
@@ -128,22 +128,22 @@ def test_remove_unreachable():
     H = State('H')
 
     transitions = {
-        (A, a): G,
-        (A, b): B,
-        (B, a): F,
-        (B, b): E,
-        (C, a): C,
-        (C, b): G,
-        (D, a): A,
-        (D, b): H,
-        (E, a): E,
-        (E, b): A,
-        (F, a): B,
-        (F, b): C,
-        (G, a): G,
-        (G, b): F,
-        (H, a): H,
-        (H, b): D,
+        (A, a): {G},
+        (A, b): {B},
+        (B, a): {F},
+        (B, b): {E},
+        (C, a): {C},
+        (C, b): {G},
+        (D, a): {A},
+        (D, b): {H},
+        (E, a): {E},
+        (E, b): {A},
+        (F, a): {B},
+        (F, b): {C},
+        (G, a): {G},
+        (G, b): {F},
+        (H, a): {H},
+        (H, b): {D},
     }
 
     fa = FiniteAutomaton(transitions, A, [A, D, G])
@@ -167,26 +167,26 @@ def test_minimize():
     H = State('H')
 
     transitions = {
-        (A, a): G,
-        (A, b): B,
-        (B, a): F,
-        (B, b): E,
-        (C, a): C,
-        (C, b): G,
-        (D, a): A,
-        (D, b): H,
-        (E, a): E,
-        (E, b): A,
-        (F, a): B,
-        (F, b): C,
-        (G, a): G,
-        (G, b): F,
-        (H, a): H,
-        (H, b): D,
+        (A, a): {G},
+        (A, b): {B},
+        (B, a): {F},
+        (B, b): {E},
+        (C, a): {C},
+        (C, b): {G},
+        (D, a): {A},
+        (D, b): {H},
+        (E, a): {E},
+        (E, b): {A},
+        (F, a): {B},
+        (F, b): {C},
+        (G, a): {G},
+        (G, b): {F},
+        (H, a): {H},
+        (H, b): {D},
     }
 
     fa = FiniteAutomaton(transitions, A, [A, D, G])
 
-    fa_min = fa.minimize()
+    fa.minimize()
 
-    assert len(fa_min.states) == 4
+    assert len(fa.states) == 4

@@ -18,7 +18,10 @@ class RegularGrammar:
         rules = []
 
         for i, line in enumerate(s.strip().splitlines()):
-            lhs, line = line.split('->')
+            try:
+                lhs, line = line.split('->')
+            except ValueError:
+                raise SyntaxError
             lhs = lhs.strip()
 
             lhs_match = LHS_REGEX.fullmatch(lhs).groups()[0]
