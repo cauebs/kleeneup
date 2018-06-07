@@ -327,8 +327,7 @@ class FiniteAutomaton:
         state_b: State,
         undistinguishable: Set[FrozenSet[State]],
     ) -> bool:
-
-            for symbol in self.alphabet:
+        for symbol in self.alphabet:
             trans_a, *_ = self.transitate(state_a, symbol)
             trans_b, *_ = self.transitate(state_b, symbol)
             if trans_a != trans_b:
@@ -370,7 +369,7 @@ class FiniteAutomaton:
             for state, sentence in current_iteration:
                 for symbol, next_states in self._delta.get(state, {}).items():
                     if symbol != '&':
-                    new_sentence = sentence + str(symbol)
+                        new_sentence = sentence + str(symbol)
 
                     for next_state in next_states:
                         next_iteration.add((next_state, new_sentence))
