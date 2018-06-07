@@ -453,7 +453,7 @@ class FiniteAutomaton:
         return fa.is_dead(fa.initial_state)
 
     def negate(self):
-        fa = self.copy()
+        fa = self.determinize()
         fa.complete()
         fa.accept_states = fa.states - fa.accept_states
         return fa
