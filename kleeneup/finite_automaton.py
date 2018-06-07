@@ -182,11 +182,42 @@ class FiniteAutomaton:
         return RegularGrammar(production_rules, start_symbol='S')
 
     def remove_epsilon_transitions(self):
-        for (state, symbol), next_states in self.transitions.items():
-            if symbol == '&':
-                self._delta[state].pop(symbol)
-                for next_state in next_states:
-                    self._replicate_transitions(next_state, state)
+        def epsilon_star(state, epsilon_set=None):
+            if epsilon_set is None:
+                epsilon_set = set()
+
+            epsilon_set.add(state)
+            try:
+                next_state = self._delta[state][Symbol('&')]
+                for nxt in next_state:
+                    epsilon_star(nxt, epsilon_set)
+            except KeyError:
+                return epsilon_set
+
+            return epsilon_set
+
+        epsilon_star_map = {}
+        for state in self.states:
+            epsilon_set = epsilon_star(state)
+            epsilon_star_map[state] = epsilon_set
+
+        for state, epsilon_set in epsilon_star_map.items():
+            for next_state in epsilon_set:
+                self._replicate_transitions(next_state, state)
+                try:
+                    self._delta[state].pop(Symbol('&'))
+                except KeyError:
+                    pass
+                if next_state in self.accept_states:
+                    self.accept_states.add(state)
+
+        # for (state, symbol), next_states in self.transitions.items():
+        #     if symbol == Symbol('&'):
+        #         self._delta[state].pop(symbol)
+        #         for next_state in next_states:
+        #             self._replicate_transitions(next_state, state)
+        #             if next_state in self.accept_states:
+        #                 self.accept_states.add(state)
 
     def determinize(self):
         fa = self.copy()
@@ -313,7 +344,7 @@ class FiniteAutomaton:
                     new_distinguishable_found = True
 
             if not new_distinguishable_found:
-                                break
+                break
 
         for state_a, state_b in undistinguishable:
             self._merge_states(state_a, state_b)
