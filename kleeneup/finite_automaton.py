@@ -1,5 +1,5 @@
 from copy import deepcopy
-from itertools import product
+from itertools import count, product
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Union, NewType, Iterable, Iterator, Mapping
 from typing import Tuple, Set, Dict, List
@@ -128,24 +128,56 @@ class FiniteAutomaton:
 
         fa = self.copy()
 
-        non_terminals = ascii_uppercase.replace('S', '')
-        n = len(non_terminals)
-
-        table = {
-            state: non_terminals[i % n] + "'" * (i // n)
-            for i, state in enumerate(fa.states - {fa.initial_state})
+        relevant_states = {
+            state
+            for state in fa.states
+            if fa._delta.get(state) and state != fa.initial_state
         }
 
-        table[fa.initial_state] = 'S'
+        letters = ascii_uppercase.replace('S', '')
+        n = len(letters)
+        non_terminals = (
+            letters[i % n] + "'" * (i // n)
+            for i in count()
+        )
+
+        table = {fa.initial_state: 'S'}
+
+        for (state, symbol), next_states in fa.transitions.items():
+            if state in relevant_states and state not in table:
+                table[state] = next(non_terminals)
+
+            for state in next_states:
+                if state in relevant_states and state not in table:
+                    table[state] = next(non_terminals)
+
         fa.rename_states(table)
 
         production_rules = []
         for (state, symbol), next_states in fa.transitions.items():
             for next_state in next_states:
-                production_rules.append((state, symbol, next_state))
+                if fa._delta.get(next_state):
+                    production_rules.append((state, symbol, next_state))
 
                 if next_state in fa.accept_states:
                     production_rules.append((state, symbol, ''))
+
+        if fa.initial_state in fa.accept_states:
+            production_rules.append(('S', '&', ''))
+
+        def compare_key(rule):
+            rule = list(rule)
+
+            for i, r in enumerate(rule):
+                if r == 'S':
+                    rule[i] = chr(0)
+
+                if r == '&':
+                    rule[i] = chr(150)
+
+            return tuple(rule)
+
+        production_rules.sort(key=compare_key)
 
         return RegularGrammar(production_rules, start_symbol='S')
 
@@ -318,6 +350,9 @@ class FiniteAutomaton:
                         next_iteration.add((next_state, new_sentence))
 
             current_iteration = next_iteration
+
+            if not next_iteration:
+                break
 
         return [
             Sentence(sentence)
