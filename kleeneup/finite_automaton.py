@@ -493,6 +493,10 @@ class FiniteAutomaton:
         initial_state = State('q0')
         fa1.states.add(initial_state)
 
+        if (fa1.initial_state in fa1.accept_states or
+                fa2.initial_state in fa2.accept_states):
+            fa1.accept_states.add(initial_state)
+
         fa1.accept_states.update(fa2.accept_states)
 
         fa1._replicate_transitions(fa1.initial_state, initial_state)
