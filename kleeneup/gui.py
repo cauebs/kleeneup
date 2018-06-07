@@ -81,6 +81,7 @@ class MainWindow(qtw.QMainWindow):
                 table.setItem(i, j, cell)
 
     def update_combo_boxes(self, index):
+        self.apply_op_btn.setEnabled(True)
         self.fa_select_left.addItem(f'M{index}')
         self.fa_select_center.addItem(f'M{index}')
 
@@ -109,11 +110,18 @@ class AutomataTestDialog(qtw.QDialog):
         self.list_btn.clicked.connect(self.show_sentences)
 
         self.populate_combo_box()
+        if self.fa_combo.count() > 0:
+            self.eval_btn.setEnabled(True)
+            self.list_btn.setEnabled(True)
 
     def show_eval_results(self):
         index = self.fa_combo.currentIndex()
 
         sentences = self.sentence_input.toPlainText()
+
+        if sentences is '':
+            return
+
         sentences = sentences.replace(' ', '').replace('\n', '').rstrip(';')
         sentences = sentences.split(';')
 
@@ -127,6 +135,7 @@ class AutomataTestDialog(qtw.QDialog):
                 text += "ACEITA\n"
             else:
                 text += "REJEITADA\n"
+        text += "-" * 22 + "\n"
         text += "\n"
 
         self.output += text
@@ -142,7 +151,12 @@ class AutomataTestDialog(qtw.QDialog):
         text += f"--- Autômato M{index+1} ---\n"
         text += f"Sentenças de tamanho {n}:\n"
         for s in sentences:
-            text += f"'{s}'\n"
+            if str(s) == '':
+                text += f"'&'\n"
+            else:
+                text += f"'{s}'\n"
+        text += "-" * 22 + "\n"
+        text += f"Número de sentenças: {len(sentences)}\n"
         text += "\n"
 
         self.output += text
@@ -188,14 +202,8 @@ class InputDialog(qtw.QDialog):
 
     def create_automaton(self):
         if self.regex_btn.isChecked():
-            self.create_from_re()
+            re = self.textEdit.toPlainText()
+            self.ctrl.create_automaton_from_re(re)
         else:
-            self.create_from_rg()
-
-    def create_from_re(self):
-        re = self.textEdit.toPlainText()
-        self.ctrl.create_automaton_from_re(re)
-
-    def create_from_rg(self):
-        rg = self.textEdit.toPlainText()
-        self.ctrl.create_automaton_from_rg(rg)
+            rg = self.textEdit.toPlainText()
+            self.ctrl.create_automaton_from_rg(rg)

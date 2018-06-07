@@ -145,7 +145,12 @@ class Control:
         af = self.automata[index]
         results = []
         for s in sentences:
-            result = af.evaluate(Sentence(s))
+            if s == '':
+                continue
+            if s == '&':
+                result = af.evaluate(Sentence(''))
+            else:
+                result = af.evaluate(Sentence(s))
             results.append((s, result))
 
         return results
