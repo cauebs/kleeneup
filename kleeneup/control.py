@@ -105,7 +105,7 @@ class Control:
         elif op_map[op] == "kleenestar":
             fa1 = self.automata[lhs]
 
-            result = FiniteAutomaton.kleenestar(fa1)
+            result = FiniteAutomaton.kleene_star(fa1)
             self.automata.append(result)
             self.main_window.update_combo_boxes(len(self.automata))
 
