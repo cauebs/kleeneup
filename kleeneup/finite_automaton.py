@@ -313,6 +313,7 @@ class FiniteAutomaton:
             self.is_dead(s)
             for _, states in self._delta.get(state, {}).items()
             for s in states
+            if s != state
         )
 
     def remove_equivalent_states(self):
