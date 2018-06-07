@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>653</width>
-    <height>524</height>
+    <width>814</width>
+    <height>493</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,6 +34,12 @@
        </item>
        <item row="0" column="2">
         <widget class="QComboBox" name="op_select">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <item>
           <property name="text">
            <string>União</string>
@@ -91,6 +97,12 @@
          <property name="enabled">
           <bool>false</bool>
          </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Aplicar</string>
          </property>
@@ -131,7 +143,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>653</width>
+     <width>814</width>
      <height>21</height>
     </rect>
    </property>

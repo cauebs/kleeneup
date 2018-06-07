@@ -211,14 +211,6 @@ class FiniteAutomaton:
                 if next_state in self.accept_states:
                     self.accept_states.add(state)
 
-        # for (state, symbol), next_states in self.transitions.items():
-        #     if symbol == Symbol('&'):
-        #         self._delta[state].pop(symbol)
-        #         for next_state in next_states:
-        #             self._replicate_transitions(next_state, state)
-        #             if next_state in self.accept_states:
-        #                 self.accept_states.add(state)
-
     def determinize(self):
         fa = self.copy()
         fa.remove_epsilon_transitions()
