@@ -360,7 +360,10 @@ class FiniteAutomaton:
         if discard == self.initial_state or keep not in self.states:
             keep, discard = discard, keep
 
-        self._replicate_transitions(discard, keep)
+        for (state, symbol), next_states in self.transitions.items():
+            if discard in next_states:
+                self.add_transition(state, symbol, keep)
+
         self.discard_state(discard)
 
     def transitate(self, state: State, symbol: Symbol) -> Set[State]:
