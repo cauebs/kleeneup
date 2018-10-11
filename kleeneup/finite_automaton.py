@@ -182,11 +182,34 @@ class FiniteAutomaton:
         return RegularGrammar(production_rules, start_symbol='S')
 
     def remove_epsilon_transitions(self):
-        for (state, symbol), next_states in self.transitions.items():
-            if symbol == '&':
-                self._delta[state].pop(symbol)
-                for next_state in next_states:
-                    self._replicate_transitions(next_state, state)
+        def epsilon_star(state, epsilon_set=None):
+            if epsilon_set is None:
+                epsilon_set = set()
+
+            epsilon_set.add(state)
+            try:
+                next_state = self._delta[state][Symbol('&')]
+                for nxt in next_state:
+                    epsilon_star(nxt, epsilon_set)
+            except KeyError:
+                return epsilon_set
+
+            return epsilon_set
+
+        epsilon_star_map = {}
+        for state in self.states:
+            epsilon_set = epsilon_star(state)
+            epsilon_star_map[state] = epsilon_set
+
+        for state, epsilon_set in epsilon_star_map.items():
+            for next_state in epsilon_set:
+                self._replicate_transitions(next_state, state)
+                try:
+                    self._delta[state].pop(Symbol('&'))
+                except KeyError:
+                    pass
+                if next_state in self.accept_states:
+                    self.accept_states.add(state)
 
     def determinize(self):
         fa = self.copy()
@@ -230,6 +253,17 @@ class FiniteAutomaton:
         new_fa.reset_state_names()
         return new_fa
 
+    def discard_state(self, state: State):
+        if self.initial_state == state:
+            self.initial_state = None
+
+        self._delta.pop(state, None)
+        self.states.discard(state)
+        self.accept_states.discard(state)
+
+        for _, next_states in self.transitions.items():
+            next_states.discard(state)
+
     def minimize(self) -> 'FiniteAutomaton':
         fa = self.copy()
         fa.remove_unreachable_states()
@@ -244,7 +278,8 @@ class FiniteAutomaton:
                 set()
             )
 
-        return fa.remove_equivalent_states()
+        fa.remove_equivalent_states()
+        return fa
 
     def remove_unreachable_states(self):
         reachable = set([self.initial_state])
@@ -253,37 +288,22 @@ class FiniteAutomaton:
         while reachable != checked:
             not_checked = set.difference(self.states, checked)
             for state in set.intersection(not_checked, reachable):
-                for symbol in self.alphabet:
-                    reachable.add(list(self._delta[state][symbol])[0])
+                for symbol, next_states in self._delta.get(state, {}).items():
+                    for next_state in next_states:
+                        reachable.add(next_state)
                 checked.add(state)
 
         for state in set.difference(self.states, reachable):
-            self._delta.pop(state, None)
+            self.discard_state(state)
 
         self.accept_states = set.intersection(reachable, self.accept_states)
         self.states = reachable
         self.reset_state_names()
 
     def remove_dead_states(self):
-        alive = self.accept_states.copy()
-        checked = set()
-
-        while alive != checked:
-            for alive_state in alive - checked:
-                for state, symbol in product(self.states, self.alphabet):
-                    if self._delta[state][symbol].issubset(alive_state):
-                        alive.add(state)
-
-                checked.add(alive_state)
-
-        for state in self.states - alive:
-            self._delta.pop(state)
-
-        if self.initial_state not in alive:
-            self.initial_state = None
-
-        self.states = alive
-        self.reset_state_names()
+        for state in self.states.copy():
+            if self.is_dead(state):
+                self.discard_state(state)
 
     def is_dead(self, state: State) -> bool:
         if state in self.accept_states:
@@ -291,8 +311,9 @@ class FiniteAutomaton:
 
         return all(
             self.is_dead(s)
-            for _, states in self._delta[state].items()
+            for _, states in self._delta.get(state, {}).items()
             for s in states
+            if s != state
         )
 
     def remove_equivalent_states(self):
@@ -316,7 +337,7 @@ class FiniteAutomaton:
                     new_distinguishable_found = True
 
             if not new_distinguishable_found:
-                                break
+                break
 
         for state_a, state_b in undistinguishable:
             self._merge_states(state_a, state_b)
@@ -328,8 +349,8 @@ class FiniteAutomaton:
         undistinguishable: Set[FrozenSet[State]],
     ) -> bool:
         for symbol in self.alphabet:
-            trans_a, *_ = self.transitate(state_a, symbol)
-            trans_b, *_ = self.transitate(state_b, symbol)
+            trans_a = frozenset(self.transitate(state_a, symbol))
+            trans_b = frozenset(self.transitate(state_b, symbol))
             if trans_a != trans_b:
                 if frozenset((trans_a, trans_b)) not in undistinguishable:
                     return False
@@ -339,10 +360,11 @@ class FiniteAutomaton:
         if discard == self.initial_state or keep not in self.states:
             keep, discard = discard, keep
 
-        self._replicate_transitions(discard, keep)
-        self._delta.pop(discard, None)
-        self.states.discard(discard)
-        self.accept_states.discard(discard)
+        for (state, symbol), next_states in self.transitions.items():
+            if discard in next_states:
+                self.add_transition(state, symbol, keep)
+
+        self.discard_state(discard)
 
     def transitate(self, state: State, symbol: Symbol) -> Set[State]:
         return self._delta.get(state, {}).get(symbol, set())
@@ -435,7 +457,7 @@ class FiniteAutomaton:
         return fa.is_dead(fa.initial_state)
 
     def negate(self):
-        fa = self.copy()
+        fa = self.determinize()
         fa.complete()
         fa.accept_states = fa.states - fa.accept_states
         return fa
@@ -457,7 +479,7 @@ class FiniteAutomaton:
         return fa_difference
 
     def _replicate_transitions(self, from_state: State, to_state: State):
-        for symbol, next_states in self._delta[from_state].items():
+        for symbol, next_states in self._delta.get(from_state, {}).items():
             for next_state in next_states:
                 self.add_transition(to_state, symbol, next_state)
 
@@ -474,6 +496,10 @@ class FiniteAutomaton:
 
         initial_state = State('q0')
         fa1.states.add(initial_state)
+
+        if (fa1.initial_state in fa1.accept_states or
+                fa2.initial_state in fa2.accept_states):
+            fa1.accept_states.add(initial_state)
 
         fa1.accept_states.update(fa2.accept_states)
 
