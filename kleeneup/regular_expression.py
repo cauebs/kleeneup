@@ -300,7 +300,7 @@ class RegularExpression:
         }
 
         if Lambda in initial_composition:
-            accept_states = set([initial_state])
+            accept_states = {initial_state}
         else:
             accept_states = set()
 

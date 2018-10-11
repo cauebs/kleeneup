@@ -1,8 +1,8 @@
 from copy import deepcopy
 from itertools import combinations, count, product
 from string import ascii_lowercase, ascii_uppercase, digits
-from typing import Union, NewType, Iterable, Iterator, Mapping
-from typing import Tuple, Set, Dict, List, FrozenSet
+from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Iterable, Iterator, Mapping, NewType, Union
 
 
 class Symbol:
@@ -57,10 +57,10 @@ State = NewType('State', str)
 
 class FiniteAutomaton:
     def __init__(
-        self,
-        transitions: Mapping[Tuple[State, Symbol], Set[State]],
-        initial_state: State,
-        accept_states: Iterable[State],
+            self,
+            transitions: Mapping[Tuple[State, Symbol], Set[State]],
+            initial_state: State,
+            accept_states: Iterable[State],
     ) -> None:
 
         self.states: Set[State] = set()
@@ -211,7 +211,7 @@ class FiniteAutomaton:
                 if next_state in self.accept_states:
                     self.accept_states.add(state)
 
-    def determinize(self):
+    def determinize(self) -> 'FiniteAutomaton':
         fa = self.copy()
         fa.remove_epsilon_transitions()
 
@@ -337,7 +337,7 @@ class FiniteAutomaton:
 
             for state_a, state_b in undistinguishable_copy:
                 if not self._are_undistinguishable(
-                    state_a, state_b, undistinguishable_copy
+                        state_a, state_b, undistinguishable_copy
                 ):
                     undistinguishable.remove(frozenset((state_a, state_b)))
                     new_distinguishable_found = True
@@ -349,10 +349,10 @@ class FiniteAutomaton:
             self._merge_states(state_a, state_b)
 
     def _are_undistinguishable(
-        self,
-        state_a: State,
-        state_b: State,
-        undistinguishable: Set[FrozenSet[State]],
+            self,
+            state_a: State,
+            state_b: State,
+            undistinguishable: Set[FrozenSet[State]],
     ) -> bool:
         for symbol in self.alphabet:
             trans_a = frozenset(self.transitate(state_a, symbol))
