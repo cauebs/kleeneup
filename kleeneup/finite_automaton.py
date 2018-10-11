@@ -217,7 +217,7 @@ class FiniteAutomaton:
 
         new_initial_state = frozenset({fa.initial_state})
         pending_states = {new_initial_state}
-        new_states = set()
+        new_states: Set[FrozenSet[State]] = set()
 
         new_transitions = {}
 
@@ -254,9 +254,6 @@ class FiniteAutomaton:
         return new_fa
 
     def discard_state(self, state: State):
-        if self.initial_state == state:
-            self.initial_state = None
-
         self._delta.pop(state, None)
         self.states.discard(state)
         self.accept_states.discard(state)
@@ -282,23 +279,23 @@ class FiniteAutomaton:
         return fa
 
     def remove_unreachable_states(self):
-        reachable = set([self.initial_state])
-        checked = set()
+        reachable = set()
+        pending = {self.initial_state}
 
-        while reachable != checked:
-            not_checked = set.difference(self.states, checked)
-            for state in set.intersection(not_checked, reachable):
-                for symbol, next_states in self._delta.get(state, {}).items():
-                    for next_state in next_states:
-                        reachable.add(next_state)
-                checked.add(state)
+        while pending:
+            state = pending.pop()
+            reachable.add(state)
 
-        for state in set.difference(self.states, reachable):
+            for next_states in self._delta.get(state, {}).values():
+                for next_state in next_states:
+                    if next_state not in reachable:
+                        pending.add(next_state)
+
+        for state in self.states - reachable:
             self.discard_state(state)
 
         self.accept_states = set.intersection(reachable, self.accept_states)
         self.states = reachable
-        self.reset_state_names()
 
     def remove_dead_states(self):
         for state in self.states.copy():
@@ -318,9 +315,9 @@ class FiniteAutomaton:
                 reached.add(s)
 
                 if not self.is_dead(s, reached):
-                    return True
+                    return False
 
-        return False
+        return True
 
     def remove_equivalent_states(self):
         undistinguishable: Set[FrozenSet[State]] = set()
@@ -332,12 +329,13 @@ class FiniteAutomaton:
             undistinguishable.add(frozenset(pair))
 
         while True:
+            print(undistinguishable)
             new_distinguishable_found = False
             undistinguishable_copy = undistinguishable.copy()
 
             for state_a, state_b in undistinguishable_copy:
                 if not self._are_undistinguishable(
-                        state_a, state_b, undistinguishable_copy
+                    state_a, state_b, undistinguishable_copy
                 ):
                     undistinguishable.remove(frozenset((state_a, state_b)))
                     new_distinguishable_found = True

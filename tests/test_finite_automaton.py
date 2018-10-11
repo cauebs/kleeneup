@@ -186,7 +186,6 @@ def test_minimize():
     }
 
     fa = FiniteAutomaton(transitions, A, [A, D, G])
-
-    fa.minimize()
+    fa = fa.minimize()
 
     assert len(fa.states) == 4
