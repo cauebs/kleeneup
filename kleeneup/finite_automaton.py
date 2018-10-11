@@ -305,16 +305,22 @@ class FiniteAutomaton:
             if self.is_dead(state):
                 self.discard_state(state)
 
-    def is_dead(self, state: State) -> bool:
+    def is_dead(self, state: State, reached=None) -> bool:
         if state in self.accept_states:
             return False
 
-        return all(
-            self.is_dead(s)
-            for _, states in self._delta.get(state, {}).items()
-            for s in states
-            if s != state
-        )
+        reached = reached or set()
+        for states in self._delta.get(state, {}).values():
+            for s in states:
+                if s in reached or s == state:
+                    continue
+
+                reached.add(s)
+
+                if not self.is_dead(s, reached):
+                    return True
+
+        return False
 
     def remove_equivalent_states(self):
         undistinguishable: Set[FrozenSet[State]] = set()
