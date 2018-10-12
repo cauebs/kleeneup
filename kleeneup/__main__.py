@@ -1,6 +1,6 @@
 from cleo import Application
 
-from . import fa, re, rg
+from .cli import fa, re, rg
 
 application = Application()
 

@@ -1,7 +1,7 @@
 from cleo import Command
 
-from kleeneup import FiniteAutomaton, State, Symbol
-from kleeneup.util import fa_to_file
+from kleeneup import FiniteAutomaton, Sentence, State, Symbol
+from kleeneup.util import fa_from_file, fa_to_file
 
 
 def write_file_and_print_table(cmd: Command, fa: FiniteAutomaton):
@@ -25,52 +25,71 @@ def write_file_and_print_table(cmd: Command, fa: FiniteAutomaton):
         cmd.info('Wrote finite automaton to {}'.format(path))
 
 
+class Create(Command):
+    """
+    Create a stub file for a new automaton
+
+    fa:create
+        {out : file to export the automaton}
+    """
+
+    def handle(self):
+        out = self.argument('out')
+
+        a = Symbol('a')
+        b = Symbol('b')
+
+        Q0 = State('Q0')
+
+        fa = FiniteAutomaton(
+            {
+                (Q0, a): [Q0],
+                (Q0, b): [Q0],
+            },
+            Q0,
+            [Q0],
+        )
+
+        path = fa_to_file(fa, out)
+        self.info('Wrote finite automaton to {}'.format(path))
+
+
+class Evaluate(Command):
+    """
+    Evaluate a sentence using a finite automaton
+
+    fa:evaluate
+        {fa : the automaton}
+        {sentence : the sentence}
+    """
+
+    def handle(self):
+        fa_path = self.argument('fa')
+        sentence = self.argument('sentence')
+
+        fa = fa_from_file(fa_path)
+
+        accepts = fa.evaluate(Sentence(sentence))
+
+        if accepts:
+            self.info('Accepted')
+        else:
+            self.error('Rejected')
+
+
 class Determinize(Command):
     """
     Determinize a finite automaton
 
     fa:determinize
-        {fa : the automata}
-        {--out= : output}
+        {fa : the automaton}
+        {--out= : file to export the resulting automaton}
     """
 
     def handle(self):
-        # fa_path = self.argument('fa')
-        #
-        # fa = fa_from_file(fa_path)
+        fa_path = self.argument('fa')
 
-        a = Symbol('a')
-        b = Symbol('b')
-
-        A = State('A')
-        B = State('B')
-        C = State('C')
-        D = State('D')
-        E = State('E')
-        F = State('F')
-        G = State('G')
-        H = State('H')
-
-        transitions = {
-            (A, a): {G},
-            (A, b): {B},
-            (B, a): {F},
-            (B, b): {E},
-            (C, a): {C},
-            (C, b): {G},
-            (D, a): {A},
-            (D, b): {H},
-            (E, a): {E},
-            (E, b): {A},
-            (F, a): {B},
-            (F, b): {C},
-            (G, a): {G},
-            (G, b): {F},
-            (H, a): {H},
-            (H, b): {D},
-        }
-
-        fa = FiniteAutomaton(transitions, A, [A, D, G])
+        fa = fa_from_file(fa_path)
 
         new_fa = fa.determinize()
 
@@ -82,16 +101,21 @@ class Union(Command):
     Computes the union of two finite automata
 
     fa:union
-        {fa1 : first automata}
-        {fa2 : second automata}
+        {fa1 : first automaton}
+        {fa2 : second automaton}
+        {--out= : file to export the resulting automaton}
     """
 
     def handle(self):
-        fa1 = self.argument('fa1')
-        fa2 = self.argument('fa2')
+        fa1_path = self.argument('fa1')
+        fa2_path = self.argument('fa2')
 
-        self.line(fa1)
-        self.line(fa2)
+        fa1 = fa_from_file(fa1_path)
+        fa2 = fa_from_file(fa2_path)
+
+        new_fa = fa1.union(fa2)
+
+        write_file_and_print_table(self, new_fa)
 
 
 class Intersection(Command):
@@ -99,16 +123,21 @@ class Intersection(Command):
     Computes the intersection of two finite automata
 
     fa:intersection
-        {fa1 : first automata}
-        {fa2 : second automata}
-    """
+        {fa1 : first automaton}
+        {fa2 : second automaton}
+        {--out= : file to export the resulting automaton}
+   """
 
     def handle(self):
-        fa1 = self.argument('fa1')
-        fa2 = self.argument('fa2')
+        fa1_path = self.argument('fa1')
+        fa2_path = self.argument('fa2')
 
-        self.line(fa1)
-        self.line(fa2)
+        fa1 = fa_from_file(fa1_path)
+        fa2 = fa_from_file(fa2_path)
+
+        new_fa = fa1.intersection(fa2)
+
+        write_file_and_print_table(self, new_fa)
 
 
-commands = [Determinize(), Union(), Intersection()]
+commands = [Create(), Evaluate(), Determinize(), Union(), Intersection()]
