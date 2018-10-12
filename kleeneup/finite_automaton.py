@@ -320,45 +320,35 @@ class FiniteAutomaton:
         return True
 
     def remove_equivalent_states(self):
-        undistinguishable: Set[FrozenSet[State]] = set()
+        partitions = {self.states - self.accept_states, self.accept_states}
+        pending = {self.accept_states}
 
-        for pair in combinations(self.states - self.accept_states, 2):
-            undistinguishable.add(frozenset(pair))
+        while pending:
+            p = pending.pop()
 
-        for pair in combinations(self.accept_states, 2):
-            undistinguishable.add(frozenset(pair))
+            for symbol in self.alphabet:
+                x = {
+                    s for s in self.states
+                    if set.intersection(p, self.transitate(s, symbol))
+                }
 
-        while True:
-            print(undistinguishable)
-            new_distinguishable_found = False
-            undistinguishable_copy = undistinguishable.copy()
+                for y in partitions.copy():
+                    foo = set.intersection(x, y)
+                    bar = y - x
 
-            for state_a, state_b in undistinguishable_copy:
-                if not self._are_undistinguishable(
-                        state_a, state_b, undistinguishable_copy
-                ):
-                    undistinguishable.remove(frozenset((state_a, state_b)))
-                    new_distinguishable_found = True
+                    if not foo or not bar:
+                        continue
 
-            if not new_distinguishable_found:
-                break
+                    partitions.remove(y)
+                    partitions.add(foo)
+                    partitions.add(bar)
 
-        for state_a, state_b in undistinguishable:
-            self._merge_states(state_a, state_b)
-
-    def _are_undistinguishable(
-            self,
-            state_a: State,
-            state_b: State,
-            undistinguishable: Set[FrozenSet[State]],
-    ) -> bool:
-        for symbol in self.alphabet:
-            trans_a = frozenset(self.transitate(state_a, symbol))
-            trans_b = frozenset(self.transitate(state_b, symbol))
-            if trans_a != trans_b:
-                if frozenset((trans_a, trans_b)) not in undistinguishable:
-                    return False
-        return True
+                    if y in pending:
+                        pending.remove(y)
+                        pending.add(foo)
+                        pending.add(bar)
+                    else:
+                        pending.add(min(foo, bar, key=len))
 
     def _merge_states(self, keep: State, discard: State):
         if discard == self.initial_state or keep not in self.states:
