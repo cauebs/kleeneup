@@ -6,7 +6,7 @@ load = json.load
 
 
 def dump(obj, f):
-    return json.dump(obj, f, default=default, indent=2, sort_keys=True)
+    return json.dump(obj, f, default=default, indent=2, sort_keys=False)
 
 
 def default(obj):
@@ -14,6 +14,6 @@ def default(obj):
         return obj.value
 
     if isinstance(obj, set):
-        return list(obj)
+        return sorted(obj)
 
     raise TypeError

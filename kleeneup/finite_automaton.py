@@ -58,7 +58,7 @@ State = NewType('State', str)
 class FiniteAutomaton:
     def __init__(
             self,
-            transitions: Mapping[Tuple[State, Symbol], Set[State]],
+            transitions: Mapping[Tuple[State, Symbol], Iterable[State]],
             initial_state: State,
             accept_states: Iterable[State],
     ) -> None:
@@ -335,7 +335,7 @@ class FiniteAutomaton:
 
             for state_a, state_b in undistinguishable_copy:
                 if not self._are_undistinguishable(
-                    state_a, state_b, undistinguishable_copy
+                        state_a, state_b, undistinguishable_copy
                 ):
                     undistinguishable.remove(frozenset((state_a, state_b)))
                     new_distinguishable_found = True

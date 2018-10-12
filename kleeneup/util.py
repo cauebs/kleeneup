@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kleeneup import FiniteAutomaton
+from kleeneup import FiniteAutomaton, Symbol
 from kleeneup.jayzon import dump, load
 
 
@@ -24,8 +24,13 @@ def fa_from_file(filename: str) -> FiniteAutomaton:
     with find_file(filename, 'fa').open() as f:
         fa = load(f)
 
+        transitions = {
+            (t['previous_state'], Symbol(t['symbol'])): t['next_states']
+            for t in fa['transitions']
+        }
+
         return FiniteAutomaton(
-            fa['transitions'],
+            transitions,
             fa['initial_state'],
             fa['accept_states']
         )
@@ -41,9 +46,12 @@ def fa_to_file(fa: FiniteAutomaton, filename: str):
 
     with path.open('w') as f:
         fad = {
-            'transitions': [[ps, sym, ns] for (ps, sym), ns in fa.transitions.items()],
             'initial_state': fa.initial_state,
             'accept_states': fa.accept_states,
+            'transitions': [
+                {'previous_state': ps, 'symbol': sym, 'next_states': ns}
+                for (ps, sym), ns in fa.transitions.items()
+            ],
         }
 
         dump(fad, f)
