@@ -13,3 +13,6 @@ cleo = "^0.6.8"
 [tool.poetry.dev-dependencies]
 pytest = "^3.8"
 mypy = "^0.630.0"
+flake8 = "^3.5"
+jedi = "^0.13.1"
+autopep8 = "^1.4"
