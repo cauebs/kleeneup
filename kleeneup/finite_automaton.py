@@ -1,8 +1,7 @@
 from copy import deepcopy
-from itertools import combinations, count, product
+from itertools import count, product
 from string import ascii_lowercase, ascii_uppercase, digits
-from typing import Dict, FrozenSet, List, Set, Tuple
-from typing import Iterable, Iterator, Mapping, NewType, Union
+from typing import Dict, FrozenSet, Iterable, Iterator, List, Mapping, NewType, Set, Tuple, Union
 
 
 class Symbol:

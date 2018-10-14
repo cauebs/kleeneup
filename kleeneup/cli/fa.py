@@ -1,41 +1,20 @@
 from cleo import Command
+from cleo.exceptions import MissingArguments
 
 from kleeneup import FiniteAutomaton, Sentence, State, Symbol
-from kleeneup.util import fa_from_file, fa_to_file
-
-
-def write_file_and_print_table(cmd: Command, fa: FiniteAutomaton):
-    out = cmd.option('out')
-
-    transitions = [
-        [str(prev_state), str(symbol), str(new_state)]
-        for ((prev_state, symbol), new_states) in fa.transitions.items()
-        for new_state in new_states
-    ]
-
-    transitions.sort()
-
-    cmd.render_table(
-        ['previous_state', 'symbol', 'next_state'],
-        transitions,
-    )
-
-    if out is not None:
-        path = fa_to_file(fa, out)
-        cmd.info('Wrote finite automaton to {}'.format(path))
+from kleeneup.cli.util import write_file_and_print_table
+from kleeneup.util import fa_from_file, rg_to_file
 
 
 class Create(Command):
     """
-    Create a stub file for a new automaton
+    Creates a stub file for a new automaton
 
     fa:create
         {out : file to export the automaton}
     """
 
     def handle(self):
-        out = self.argument('out')
-
         a = Symbol('a')
         b = Symbol('b')
 
@@ -50,13 +29,12 @@ class Create(Command):
             [Q0],
         )
 
-        path = fa_to_file(fa, out)
-        self.info('Wrote finite automaton to {}'.format(path))
+        write_file_and_print_table(self, fa, self.argument('out'))
 
 
 class Evaluate(Command):
     """
-    Evaluate a sentence using a finite automaton
+    Evaluates a sentence using a finite automaton
 
     fa:evaluate
         {fa : the automaton}
@@ -79,11 +57,11 @@ class Evaluate(Command):
 
 class Determinize(Command):
     """
-    Determinize a finite automaton
+    Determinizes a finite automaton
 
     fa:determinize
         {fa : the automaton}
-        {--out= : file to export the resulting automaton}
+        {out? : file to export the resulting automaton}
     """
 
     def handle(self):
@@ -93,7 +71,26 @@ class Determinize(Command):
 
         new_fa = fa.determinize()
 
-        write_file_and_print_table(self, new_fa)
+        write_file_and_print_table(self, new_fa, self.argument('out'))
+
+
+class Minimize(Command):
+    """
+    Minimizes a finite automaton
+
+    fa:minimize
+        {fa : the automaton}
+        {out? : file to export the resulting automaton}
+    """
+
+    def handle(self):
+        fa_path = self.argument('fa')
+
+        fa = fa_from_file(fa_path)
+
+        new_fa = fa.minimize()
+
+        write_file_and_print_table(self, new_fa, self.argument('out'))
 
 
 class Union(Command):
@@ -103,7 +100,7 @@ class Union(Command):
     fa:union
         {fa1 : first automaton}
         {fa2 : second automaton}
-        {--out= : file to export the resulting automaton}
+        {out? : file to export the resulting automaton}
     """
 
     def handle(self):
@@ -115,7 +112,7 @@ class Union(Command):
 
         new_fa = fa1.union(fa2)
 
-        write_file_and_print_table(self, new_fa)
+        write_file_and_print_table(self, new_fa, self.argument('out'))
 
 
 class Intersection(Command):
@@ -125,7 +122,7 @@ class Intersection(Command):
     fa:intersection
         {fa1 : first automaton}
         {fa2 : second automaton}
-        {--out= : file to export the resulting automaton}
+        {out? : file to export the resulting automaton}
    """
 
     def handle(self):
@@ -137,7 +134,34 @@ class Intersection(Command):
 
         new_fa = fa1.intersection(fa2)
 
-        write_file_and_print_table(self, new_fa)
+        write_file_and_print_table(self, new_fa, self.argument('out'))
 
 
-commands = [Create(), Evaluate(), Determinize(), Union(), Intersection()]
+class ConvertToRG(Command):
+    """
+    Converts an automaton to a regular grammar
+
+    fa:rg
+        {fa : the automaton}
+        {out? : file to export the resulting grammar}
+    """
+
+    def handle(self):
+        fa_path = self.argument('fa')
+        out = self.argument('out')
+
+        if fa_path is None:
+            raise MissingArguments('Not enough arguments')
+
+        fa = fa_from_file(fa_path)
+
+        rg = fa.to_regular_grammar()
+
+        self.line(str(rg))
+
+        if out is not None:
+            path = rg_to_file(rg, out)
+            self.info('Wrote regular grammar to {}'.format(path))
+
+
+commands = [Create(), Evaluate(), Determinize(), Minimize(), Union(), Intersection(), ConvertToRG()]
