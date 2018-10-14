@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kleeneup import FiniteAutomaton, Symbol
+from kleeneup import FiniteAutomaton, RegularGrammar, Symbol
 from kleeneup.jayzon import dump, load
 
 
@@ -37,10 +37,10 @@ def fa_from_file(filename: str) -> FiniteAutomaton:
 
 
 def fa_to_file(fa: FiniteAutomaton, filename: str):
-    ext = 'fa'
+    ext = '.fa'
 
-    if not filename.endswith('.' + ext):
-        filename = filename + '.' + ext
+    if not filename.endswith(ext):
+        filename = filename + ext
 
     path = Path(filename)
 
@@ -57,3 +57,24 @@ def fa_to_file(fa: FiniteAutomaton, filename: str):
         dump(fad, f)
 
     return path
+
+
+def rg_to_file(rg: RegularGrammar, filename: str):
+    ext = '.rg'
+
+    if not filename.endswith(ext):
+        filename = filename + ext
+
+    path = Path(filename)
+
+    with path.open('w') as f:
+        f.write(str(rg))
+        f.write('\n')
+
+    return path
+
+
+def rg_from_file(filename: str):
+    with find_file(filename, 'rg').open() as f:
+        content = f.read()
+        return RegularGrammar.from_string(content)
