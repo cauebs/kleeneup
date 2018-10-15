@@ -1,5 +1,7 @@
+from enum import Enum, unique
+
 from lark import Lark, Tree
-from enum import Enum, auto
+
 from .finite_automaton import FiniteAutomaton, State, Symbol
 
 parser = Lark('''?e: e "|" a -> union
@@ -30,12 +32,13 @@ class Lambda:
     pass
 
 
+@unique
 class Operation(Enum):
     """Descreve as possíveis operações em expressões regulares."""
-    UNION = auto()
-    CONCATENATION = auto()
-    KLEENESTAR = auto()
-    OPTION = auto()
+    UNION = 1
+    CONCATENATION = 2
+    KLEENESTAR = 3
+    OPTION = 4
 
 
 class StitchedBinaryTree:
@@ -96,16 +99,16 @@ class StitchedBinaryTree:
             if (current.data != Operation['UNION'] and
                     current.data != Operation['CONCATENATION']):
                 try:
-                    current.seam = inorder[i+1]
+                    current.seam = inorder[i + 1]
                 except IndexError:
                     current.seam = Lambda
 
     def reachable_symbols(
-        self,
-        direction,
-        reachable=None,
-        visited_down=None,
-        visited_up=None
+            self,
+            direction,
+            reachable=None,
+            visited_down=None,
+            visited_up=None
     ):
         """Retorna os símbolos terminais alcançáveis a partir de um nodo qualquer
         dada a direção em que ele foi visitado.
@@ -264,10 +267,10 @@ class StitchedBinaryTree:
             yield from self.right.inorder()
 
     def __str__(self):
-        return f"{self.data}"
+        return str(self.data)
 
     def __repr__(self):
-        return f"<StitchedBinaryTree '{self.__str__()}'>"
+        return "<StitchedBinaryTree '{}'>".format(self)
 
 
 class RegularExpression:
@@ -327,17 +330,17 @@ class RegularExpression:
                 if len(new_comp) > 0:
                     if new_comp not in compositions:
                         unvisited_compositions.append(new_comp)
-                        new_state = State(f"Q{state_index}")
+                        new_state = State('Q{}'.format(state_index))
                         compositions[new_comp] = new_state
 
                         transitions[(compositions[current_comp], s)
-                                    ] = {new_state}
+                        ] = {new_state}
                         if Lambda in new_comp:
                             accept_states.add(new_state)
 
                         state_index += 1
                     else:
                         transitions[(compositions[current_comp], s)
-                                    ] = {compositions[new_comp]}
+                        ] = {compositions[new_comp]}
 
         return FiniteAutomaton(transitions, initial_state, accept_states)
