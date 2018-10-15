@@ -154,7 +154,6 @@ def test_remove_unreachable():
 
 
 def test_minimize():
-    return
     a = Symbol('a')
     b = Symbol('b')
 
@@ -189,4 +188,4 @@ def test_minimize():
     fa = FiniteAutomaton(transitions, A, [A, D, G])
     fa = fa.minimize()
 
-    assert len(fa.states) == 4
+    assert len(fa.states) == 3

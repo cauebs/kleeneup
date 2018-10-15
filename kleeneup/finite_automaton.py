@@ -319,8 +319,15 @@ class FiniteAutomaton:
         return True
 
     def remove_equivalent_states(self):
-        partitions = {self.states - self.accept_states, self.accept_states}
-        pending = {self.accept_states}
+        from pprint import pprint
+        print()
+        pprint(self._delta)
+        pprint(self.accept_states)
+        partitions = {
+            frozenset(self.states - self.accept_states),
+            frozenset(self.accept_states),
+        }
+        pending = {frozenset(self.accept_states)}
 
         while pending:
             p = pending.pop()
@@ -328,26 +335,31 @@ class FiniteAutomaton:
             for symbol in self.alphabet:
                 x = {
                     s for s in self.states
-                    if set.intersection(p, self.transitate(s, symbol))
+                    if p & self.transitate(s, symbol)
                 }
 
                 for y in partitions.copy():
-                    foo = set.intersection(x, y)
+                    foo = x & y
                     bar = y - x
 
                     if not foo or not bar:
                         continue
 
                     partitions.remove(y)
-                    partitions.add(foo)
-                    partitions.add(bar)
+                    partitions.add(frozenset(foo))
+                    partitions.add(frozenset(bar))
 
                     if y in pending:
                         pending.remove(y)
-                        pending.add(foo)
-                        pending.add(bar)
+                        pending.add(frozenset(foo))
+                        pending.add(frozenset(bar))
                     else:
-                        pending.add(min(foo, bar, key=len))
+                        pending.add(frozenset(min(foo, bar, key=len)))
+
+        for partition in partitions:
+            state, *others = partition
+            for other_state in others:
+                self._merge_states(state, other_state)
 
     def _merge_states(self, keep: State, discard: State):
         if discard == self.initial_state or keep not in self.states:
