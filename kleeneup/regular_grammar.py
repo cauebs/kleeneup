@@ -64,8 +64,9 @@ class RegularGrammar:
 
     def __str__(self):
         return '\n'.join(
-            f'{nt1} -> ' + ' | '.join(
-                f'{t}{nt2 if nt2 is not None else ""}'
+            '{} -> '.format(nt1) +
+            ' | '.join(
+                '{}{}'.format(t, nt2 if nt2 is not None else "")
                 for _, t, nt2 in group
             )
             for nt1, group in groupby(self.production_rules, key=lambda x: x[0])

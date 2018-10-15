@@ -4,6 +4,10 @@ from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Dict, FrozenSet, Iterable, Iterator, List, Mapping, NewType, Set, Tuple, Union
 
 
+class MustBeDeterministic(Exception):
+    pass
+
+
 class Symbol:
     def __init__(self, value: str) -> None:
         if len(value) != 1 or value not in ascii_lowercase + digits + '&':
@@ -14,7 +18,7 @@ class Symbol:
         return self.value
 
     def __repr__(self) -> str:
-        return f"<Symbol '{self}'>"
+        return "<Symbol '{}'>".format(self)
 
     def __hash__(self) -> int:
         return hash(repr(self))
@@ -40,7 +44,7 @@ class Sentence:
         return ''.join(s.value for s in self.symbols)
 
     def __repr__(self) -> str:
-        return f"<Sentence '{self}'>"
+        return "<Sentence '{}'>".format(self)
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Sentence):
@@ -62,9 +66,9 @@ class FiniteAutomaton:
             accept_states: Iterable[State],
     ) -> None:
 
-        self.states: Set[State] = set()
-        self.alphabet: Set[Symbol] = set()
-        self._delta: Dict[State, Dict[Symbol, Set[State]]] = {}
+        self.states = set()  # type: Set[State]
+        self.alphabet = set()  # type: Set[Symbol]
+        self._delta = {}  # type: Dict[State, Dict[Symbol, Set[State]]]
         self.initial_state = initial_state
         self.accept_states = set(accept_states)
 
@@ -110,13 +114,13 @@ class FiniteAutomaton:
 
     def prefix_state_names(self, prefix):
         self.rename_states({
-            state: f'{prefix}{state}'
+            state: '{}{}'.format(prefix, state)
             for state in self.states
         })
 
     def reset_state_names(self):
         trans = {
-            state: f'Q{i}'
+            state: 'Q{}'.format(i)
             for i, state in enumerate(self.states - {self.initial_state}, 1)
         }
         trans[self.initial_state] = 'Q0'
@@ -216,7 +220,7 @@ class FiniteAutomaton:
 
         new_initial_state = frozenset({fa.initial_state})
         pending_states = {new_initial_state}
-        new_states: Set[FrozenSet[State]] = set()
+        new_states = set()  # type: Set[FrozenSet[State]]
 
         new_transitions = {}
 
@@ -261,6 +265,9 @@ class FiniteAutomaton:
             next_states.discard(state)
 
     def minimize(self) -> 'FiniteAutomaton':
+        if not self.is_deterministic():
+            raise MustBeDeterministic()
+
         fa = self.copy()
         fa.remove_unreachable_states()
         fa.remove_dead_states()
@@ -534,3 +541,14 @@ class FiniteAutomaton:
 
         fa1.reset_state_names()
         return fa1
+
+    def is_deterministic(self):
+        for state in self.states:
+            if len(self.transitate(state, Symbol('&'))) > 0:
+                return False
+
+            for symbol in self.alphabet:
+                if len(self.transitate(state, symbol)) > 1:
+                    return False
+
+        return True
