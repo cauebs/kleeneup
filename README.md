@@ -1,11 +1,58 @@
-# Kleeneup (WIP)
+# Kleeneup
 
-Application for manipulating **finite automata**, **regular grammars** and **regular expressions**.
+Trabalho 1 de INE5421 - Linguagens Formais e Compiladores
 
-+ Reads, edits and saves regular grammars and regular expressions
-+ Converts regular expressions to finite automata using De Simone's algorithm
-+ Transforms regular grammars into finite automata and vice-versa
-+ Determinizes and minimizes finite automata
-+ Obtains finite automata that represent the intersection, difference or reverse of regular languages
-+ Obtains regular grammars resulting from the union, concatenation and closure of regular grammars
-+ Recognizes sentences accepted by a finite automaton and enumerates sentences of length n accepted by it
+Professora: Jerusa Marchi
+
+Alunos: Cauê Baash de Souza e Caio Pereira Oliveira
+
+Trabalho desenvolvido na linguagem Python (versão 3.5 e acima).
+
+Instalação:
+-----------
+
+```bash
+$ pip3 install --user kleeneup.whl
+```
+
+Execução:
+---------
+```bash
+$ python3 -m kleeneup <argumentos>
+```
+
+Comandos disponíveis:
+---------------------
+```
+Available commands:
+  help             Displays help for a command
+  list             Lists commands
+ fa
+  fa:create        Creates a stub file for a new automaton
+  fa:determinize   Determinizes a finite automaton
+  fa:evaluate      Evaluates a sentence using a finite automaton
+  fa:intersection  Computes the intersection of two finite automata
+  fa:minimize      Minimizes a finite automaton
+  fa:rg            Converts an automaton to a regular grammar
+  fa:union         Computes the union of two finite automata
+ re
+  re:fa            Converts a regular expression to a non-deterministic finite automaton
+ rg
+  rg:create        Creates a stub file for a new grammar
+  rg:fa            Converts a grammar to a non-deterministic finite automaton
+```
+
+##### Exemplo de uso:
+```bash
+# Cria arquivo base para um autômato finito
+$ python3 -m kleeneup fa:create mult3
+
+# Edita arquivo do autômato
+$ vim mult3.fa
+
+# Testa se a palavra 110110 é aceita pelo autômato
+$ python3 -m kleeneup fa:evaluate mult3 110110
+
+# Minimiza autômato mult3 e salva em novo arquivo
+$ python3 -m kleeneup fa:minimize mult3 mult3min
+```
